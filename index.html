@@ -3,170 +3,720 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RoomHub — Gestão de Salas</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>TP Room Management Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@200;300;400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f0e0d;
-    --surface: #1a1917;
-    --surface2: #242320;
-    --border: #2e2c29;
-    --accent: #e8c547;
-    --accent2: #d4a843;
-    --text: #f0ede8;
-    --muted: #7a7570;
-    --danger: #e05252;
-    --success: #52b788;
-    --info: #5b8dee;
-    --warning: #f0a050;
+    --bg:          #ece9e7;
+    --surface:     #ffffff;
+    --surface2:    #f5f3f1;
+    --border:      #d4d2ca;
+    --border2:     #c0bdb8;
+    --tp-slate:    #4B4C6A;
+    --tp-slate-lt: #848dad;
+    --tp-pink:     #ff0082;
+    --text:        #1a1a2e;
+    --muted:       #918e81;
+    --muted2:      #b0ada6;
+    --success:     #2d7a5a;
+    --success-bg:  #e8f4ee;
+    --info:        #2a4fa0;
+    --info-bg:     #e8eef8;
+    --danger:      #a02a2a;
+    --danger-bg:   #f8e8e8;
+    --warning:     #7a5500;
+    --warning-bg:  #fdf3e0;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
 
-  /* SIDEBAR */
-  .sidebar { width: 240px; min-height: 100vh; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
-  .logo { padding: 28px 24px 24px; border-bottom: 1px solid var(--border); }
-  .logo-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--accent); letter-spacing: -0.5px; }
-  .logo-sub { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 2px; }
-  .nav { padding: 16px 12px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
-  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--muted); transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
-  .nav-item:hover { background: var(--surface2); color: var(--text); }
-  .nav-item.active { background: var(--accent); color: #1a1917; }
-  .nav-item .icon { font-size: 16px; }
-  .sync-indicator { padding: 16px 24px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
-  .sync-dot.synced { background: var(--success); }
-  .sync-dot.syncing { background: var(--warning); animation: pulse 1s infinite; }
-  .sync-dot.error { background: var(--danger); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 300;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── SIDEBAR ─────────────────────────────── */
+  .sidebar {
+    width: 260px;
+    min-height: 100vh;
+    background: var(--tp-slate);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .logo-area {
+    padding: 32px 28px 28px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* TP Logo SVG inline */
+  .tp-logo {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 14px;
+  }
+
+  .app-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+  }
+
+  .app-name span {
+    display: block;
+    font-size: 10px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 3px;
+  }
+
+  .nav {
+    padding: 20px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.55);
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    letter-spacing: 0.2px;
+  }
+
+  .nav-item svg { opacity: 0.6; flex-shrink: 0; }
+  .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .nav-item:hover svg { opacity: 1; }
+  .nav-item.active { background: rgba(255,255,255,0.14); color: #fff; font-weight: 600; }
+  .nav-item.active svg { opacity: 1; }
+
+  .nav-section-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.25);
+    padding: 16px 14px 6px;
+    font-weight: 600;
+  }
+
+  .sync-area {
+    padding: 16px 28px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sync-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+
+  .sync-dot.synced { background: #52b788; }
+  .sync-dot.syncing { background: #f0a050; animation: pulse 1s infinite; }
+  .sync-dot.error { background: #e05252; }
+
+  .sync-text {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+  }
+
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  /* MAIN */
-  .main { margin-left: 240px; flex: 1; padding: 40px; min-height: 100vh; }
+  /* ── MAIN ────────────────────────────────── */
+  .main {
+    margin-left: 260px;
+    flex: 1;
+    padding: 48px 48px 64px;
+    min-height: 100vh;
+  }
+
   .page { display: none; }
   .page.active { display: block; }
-  .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 36px; flex-wrap: wrap; gap: 16px; }
-  .page-title { font-family: 'DM Serif Display', serif; font-size: 34px; color: var(--text); line-height: 1.1; }
-  .page-subtitle { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .page-title {
+    font-size: 30px;
+    font-weight: 200;
+    color: var(--tp-slate);
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+
+  .page-eyebrow {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--tp-pink);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
   .page-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-  /* BUTTONS */
-  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; transition: all 0.15s; }
-  .btn-primary { background: var(--accent); color: #1a1917; }
-  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { color: var(--text); border-color: var(--text); }
-  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
-  .btn-danger:hover { background: var(--danger); color: #fff; }
-  .btn-success { background: transparent; color: var(--success); border: 1px solid var(--success); }
-  .btn-success:hover { background: var(--success); color: #fff; }
-  .btn-sm { padding: 6px 12px; font-size: 12px; }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  /* ── BUTTONS ─────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 22px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Nunito Sans', sans-serif;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
 
-  /* CARDS */
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .btn-primary {
+    background: var(--tp-slate);
+    color: #fff;
+  }
 
-  /* ROOMS GRID */
-  .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-  .room-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: all 0.2s; }
-  .room-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(232,197,71,0.08); }
-  .room-card-top { padding: 22px 22px 16px; border-bottom: 1px solid var(--border); }
-  .room-type-badge { display: inline-block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 8px; border-radius: 4px; margin-bottom: 10px; }
-  .badge-meeting { background: rgba(91,141,238,0.15); color: var(--info); }
-  .badge-training { background: rgba(82,183,136,0.15); color: var(--success); }
-  .room-name { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); }
-  .room-location { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .room-card-body { padding: 16px 22px; display: flex; align-items: center; justify-content: space-between; }
-  .room-stat { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
-  .room-stat strong { color: var(--text); font-size: 18px; }
-  .room-card-actions { padding: 0 22px 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-primary:hover {
+    background: #3a3b56;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(75,76,106,0.25);
+  }
 
-  /* FORM */
+  .btn-outline {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border2);
+  }
+
+  .btn-outline:hover { color: var(--text); border-color: var(--tp-slate-lt); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+
+  .btn-danger-soft {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid #e8c0c0;
+  }
+
+  .btn-danger-soft:hover { background: var(--danger-bg); }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+  /* ── STAT CARDS ──────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px 24px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--tp-slate);
+  }
+
+  .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .stat-value {
+    font-size: 38px;
+    font-weight: 200;
+    color: var(--tp-slate);
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--muted2);
+    margin-top: 8px;
+  }
+
+  /* ── CARDS ───────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--tp-slate);
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* ── ROOM CARDS ──────────────────────────── */
+  .rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 16px;
+  }
+
+  .room-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .room-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--tp-slate);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .room-card:hover { border-color: var(--tp-slate-lt); box-shadow: 0 4px 20px rgba(75,76,106,0.1); }
+  .room-card:hover::after { opacity: 1; }
+
+  .room-card-header {
+    padding: 20px 22px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .room-type-pill {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 3px 9px;
+    border-radius: 2px;
+    margin-bottom: 10px;
+  }
+
+  .pill-meeting { background: var(--info-bg); color: var(--info); }
+  .pill-training { background: var(--success-bg); color: var(--success); }
+
+  .room-name {
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--tp-slate);
+    margin-bottom: 4px;
+  }
+
+  .room-meta {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .room-card-body {
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+  }
+
+  .room-seats {
+    font-size: 22px;
+    font-weight: 200;
+    color: var(--tp-slate);
+  }
+
+  .room-seats-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+  }
+
+  .room-bookings-pill {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--info);
+    background: var(--info-bg);
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+
+  .room-card-actions {
+    padding: 12px 22px;
+    display: flex;
+    gap: 8px;
+  }
+
+  /* ── OCCUPANCY ───────────────────────────── */
+  .occupancy-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .occupancy-item { display: flex; align-items: center; gap: 14px; }
+
+  .occupancy-name {
+    width: 150px;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .occupancy-loc {
+    font-size: 11px;
+    color: var(--muted2);
+    font-weight: 300;
+  }
+
+  .occupancy-bar-wrap {
+    flex: 1;
+    height: 5px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .occupancy-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.8s ease;
+  }
+
+  .bar-high { background: var(--danger); }
+  .bar-medium { background: var(--tp-slate); }
+  .bar-low { background: var(--success); }
+
+  .occupancy-pct {
+    width: 36px;
+    text-align: right;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  /* ── RECENT BOOKINGS ─────────────────────── */
+  .recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border-radius: 4px;
+    border-left: 2px solid var(--border2);
+    gap: 10px;
+  }
+
+  .recent-project { font-size: 13px; font-weight: 600; color: var(--text); }
+  .recent-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ── TABLE ───────────────────────────────── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    overflow-x: auto;
+  }
+
+  table { width: 100%; border-collapse: collapse; min-width: 720px; }
+
+  thead { background: var(--tp-slate); }
+
+  th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text);
+    border-top: 1px solid var(--border);
+    font-weight: 300;
+  }
+
+  tr:hover td { background: var(--surface2); }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .pill-active   { background: var(--success-bg); color: var(--success); }
+  .pill-upcoming { background: var(--info-bg);    color: var(--info); }
+  .pill-past     { background: var(--surface2);   color: var(--muted); }
+
+  /* ── FILTERS ─────────────────────────────── */
+  .filters-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .filters-row input,
+  .filters-row select {
+    width: auto;
+    flex: 1;
+    min-width: 160px;
+  }
+
+  /* ── FORM ────────────────────────────────── */
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
   .form-group.full { grid-column: 1 / -1; }
-  label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-  input, select, textarea { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif; transition: border-color 0.15s; outline: none; width: 100%; }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+  label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+  }
+
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 13px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 300;
+    transition: border-color 0.15s;
+    outline: none;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--tp-slate);
+    background: #fff;
+  }
+
   select option { background: var(--surface2); }
   textarea { resize: vertical; min-height: 80px; }
-  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
 
-  /* CONFLICT WARNING */
-  .conflict-box { background: rgba(224,82,82,0.1); border: 1px solid var(--danger); border-radius: 8px; padding: 12px 16px; margin-top: 12px; display: none; }
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── CONFLICT ────────────────────────────── */
+  .conflict-box {
+    background: var(--danger-bg);
+    border: 1px solid #e8c0c0;
+    border-left: 3px solid var(--danger);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-top: 14px;
+    display: none;
+  }
+
   .conflict-box.show { display: block; }
-  .conflict-title { font-size: 13px; font-weight: 600; color: var(--danger); margin-bottom: 6px; }
-  .conflict-item { font-size: 12px; color: var(--text); padding: 3px 0; }
+  .conflict-title { font-size: 12px; font-weight: 700; color: var(--danger); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .conflict-item { font-size: 12px; color: var(--text); padding: 2px 0; font-weight: 300; }
 
-  /* MODAL */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  /* ── MODAL ───────────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(75,76,106,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+
   .modal-overlay.open { display: flex; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; animation: modalIn 0.2s ease; }
-  @keyframes modalIn { from{opacity:0;transform:scale(0.95) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
-  .modal-title { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 24px; color: var(--text); }
 
-  /* TABLE */
-  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; min-width: 700px; }
-  thead { background: var(--surface2); }
-  th { text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); white-space: nowrap; }
-  td { padding: 14px 16px; font-size: 14px; color: var(--text); border-top: 1px solid var(--border); }
-  tr:hover td { background: var(--surface2); }
-  .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
-  .status-active { background: rgba(82,183,136,0.15); color: var(--success); }
-  .status-upcoming { background: rgba(91,141,238,0.15); color: var(--info); }
-  .status-past { background: rgba(122,117,112,0.15); color: var(--muted); }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 36px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalIn 0.18s ease;
+    position: relative;
+  }
 
-  /* DASHBOARD */
-  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
-  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
-  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
-  .stat-value { font-family: 'DM Serif Display', serif; font-size: 36px; color: var(--accent); line-height: 1; }
-  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .occupancy-list { display: flex; flex-direction: column; gap: 16px; }
-  .occupancy-item { display: flex; align-items: center; gap: 16px; }
-  .occupancy-name { width: 160px; flex-shrink: 0; font-size: 14px; font-weight: 500; }
-  .occupancy-bar-wrap { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
-  .occupancy-bar { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.6s ease; }
-  .occupancy-bar.high { background: var(--danger); }
-  .occupancy-bar.medium { background: var(--accent); }
-  .occupancy-bar.low { background: var(--success); }
-  .occupancy-pct { width: 40px; text-align: right; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--tp-slate);
+    border-radius: 6px 6px 0 0;
+  }
 
-  /* CALENDAR */
-  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-  .cal-header { text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 8px 4px; }
-  .cal-day { background: var(--surface2); border-radius: 6px; padding: 8px 6px; min-height: 70px; cursor: pointer; transition: background 0.15s; }
-  .cal-day:hover { background: var(--border); }
-  .cal-day.today { border: 1px solid var(--accent); }
-  .cal-day.empty { background: transparent; cursor: default; }
-  .cal-day-num { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
-  .cal-day.today .cal-day-num { color: var(--accent); }
-  .cal-event { font-size: 10px; background: rgba(232,197,71,0.2); color: var(--accent); border-radius: 3px; padding: 1px 4px; margin-bottom: 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  @keyframes modalIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+  .modal-title {
+    font-size: 22px;
+    font-weight: 200;
+    color: var(--tp-slate);
+    margin-bottom: 24px;
+    letter-spacing: -0.3px;
+  }
+
+  /* ── CALENDAR ────────────────────────────── */
   .cal-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-  .cal-month { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); }
+  .cal-month { font-size: 18px; font-weight: 300; color: var(--tp-slate); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-hdr { text-align: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 8px 4px; }
+  .cal-day { background: var(--surface2); border-radius: 4px; padding: 8px 6px; min-height: 72px; cursor: pointer; transition: background 0.15s; border: 1px solid transparent; }
+  .cal-day:hover { background: var(--border); }
+  .cal-day.today { border-color: var(--tp-slate); }
+  .cal-day.empty { background: transparent; cursor: default; border-color: transparent; }
+  .cal-day-num { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+  .cal-day.today .cal-day-num { color: var(--tp-slate); font-weight: 700; }
+  .cal-event { font-size: 9px; background: var(--tp-slate); color: #fff; border-radius: 2px; padding: 2px 5px; margin-bottom: 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600; letter-spacing: 0.2px; }
 
-  /* TOAST */
-  .toast { position: fixed; bottom: 28px; right: 28px; background: var(--surface); border: 1px solid var(--accent); color: var(--text); padding: 14px 20px; border-radius: 10px; font-size: 14px; z-index: 9999; display: none; animation: slideIn 0.25s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.4); max-width: 360px; }
-  .toast.error { border-color: var(--danger); }
-  @keyframes slideIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  /* ── LOADING ─────────────────────────────── */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(236,233,231,0.9);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
 
-  /* LOADING */
-  .loading-overlay { position: fixed; inset: 0; background: rgba(15,14,13,0.8); z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
   .loading-overlay.show { display: flex; }
-  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
 
-  /* MISC */
-  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
-  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
-  .empty-state p { font-size: 15px; }
-  .filters-row { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
-  .filters-row input, .filters-row select { width: auto; flex: 1; min-width: 160px; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--tp-slate);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .loading-text { font-size: 13px; color: var(--muted); font-weight: 300; }
+
+  /* ── TOAST ───────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--tp-slate);
+    color: #fff;
+    padding: 13px 20px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 300;
+    z-index: 9999;
+    display: none;
+    animation: slideUp 0.2s ease;
+    box-shadow: 0 8px 24px rgba(75,76,106,0.25);
+    max-width: 360px;
+  }
+
+  .toast.error { background: var(--danger); }
+  @keyframes slideUp { from{transform:translateY(12px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+  /* ── EMPTY STATE ─────────────────────────── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted2);
+  }
+
+  .empty-state .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; font-weight: 300; }
 
   @media (max-width: 900px) {
     .stats-row { grid-template-columns: repeat(2,1fr); }
     .two-col { grid-template-columns: 1fr; }
+    .main { padding: 28px 20px; }
   }
 </style>
 </head>
@@ -175,68 +725,132 @@
 <!-- LOADING -->
 <div class="loading-overlay" id="loading-overlay">
   <div class="spinner"></div>
-  <div style="color:var(--muted);font-size:14px;" id="loading-msg">A carregar...</div>
+  <div class="loading-text" id="loading-msg">A ligar à base de dados...</div>
 </div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="logo">
-    <div class="logo-title">RoomHub</div>
-    <div class="logo-sub">Gestão de Salas</div>
+  <div class="logo-area">
+    <!-- TP Logo SVG — white version on dark background -->
+    <svg class="tp-logo" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- T: small diagonal notch top-left, then horizontal bar, then vertical stem -->
+      <!-- Notch arrow: top-left corner cut at 45deg -->
+      <polygon points="
+        8,22
+        22,8
+        58,8
+        58,22
+        38,22
+        38,82
+        22,82
+        22,22
+      " fill="white"/>
+      <!-- P: vertical bar + half-circle bump -->
+      <rect x="66" y="8" width="14" height="74" fill="white"/>
+      <path d="M80,8 Q100,8 100,30 Q100,52 80,52 Z" fill="white"/>
+    </svg>
+    <div class="app-name">
+      TP Room Management Hub
+      <span>Teleperformance Portugal</span>
+    </div>
   </div>
+
   <nav class="nav">
-    <button class="nav-item active" onclick="showPage('dashboard')"><span class="icon">◉</span> Dashboard</button>
-    <button class="nav-item" onclick="showPage('rooms')"><span class="icon">▣</span> Salas</button>
-    <button class="nav-item" onclick="showPage('bookings')"><span class="icon">◈</span> Agendamentos</button>
-    <button class="nav-item" onclick="showPage('calendar')"><span class="icon">◷</span> Calendário</button>
+    <div class="nav-section-label">Navegação</div>
+
+    <button class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+
+    <button class="nav-item" onclick="showPage('rooms')" id="nav-rooms">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Salas
+    </button>
+
+    <button class="nav-item" onclick="showPage('bookings')" id="nav-bookings">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Agendamentos
+    </button>
+
+    <button class="nav-item" onclick="showPage('calendar')" id="nav-calendar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+      Calendário
+    </button>
   </nav>
-  <div class="sync-indicator">
+
+  <div class="sync-area">
     <div class="sync-dot" id="sync-dot"></div>
-    <span id="sync-label">A ligar...</span>
+    <span class="sync-text" id="sync-label">A ligar...</span>
   </div>
 </aside>
 
-<!-- MAIN -->
+<!-- MAIN CONTENT -->
 <main class="main">
 
-  <!-- DASHBOARD -->
+  <!-- ── DASHBOARD ── -->
   <section id="page-dashboard" class="page active">
     <div class="page-header">
       <div>
+        <div class="page-eyebrow">Visão Geral</div>
         <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Visão geral de ocupação e atividade</p>
       </div>
       <div class="page-actions">
-        <button class="btn btn-ghost" onclick="exportCSV()">↓ Exportar CSV</button>
-        <button class="btn btn-ghost" onclick="exportExcel()">↓ Exportar Excel</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ Exportar CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportExcel()">↓ Exportar Excel</button>
       </div>
     </div>
+
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Total de Salas</div><div class="stat-value" id="stat-total-rooms">—</div><div class="stat-sub">registadas no sistema</div></div>
-      <div class="stat-card"><div class="stat-label">Agendamentos Ativos</div><div class="stat-value" id="stat-active-bookings">—</div><div class="stat-sub">em curso hoje</div></div>
-      <div class="stat-card"><div class="stat-label">Agendamentos Futuros</div><div class="stat-value" id="stat-upcoming-bookings">—</div><div class="stat-sub">próximos 30 dias</div></div>
-      <div class="stat-card"><div class="stat-label">Total de Postos</div><div class="stat-value" id="stat-total-seats">—</div><div class="stat-sub">capacidade total</div></div>
+      <div class="stat-card">
+        <div class="stat-label">Total de Salas</div>
+        <div class="stat-value" id="stat-total-rooms">—</div>
+        <div class="stat-sub">registadas no sistema</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Em Curso Hoje</div>
+        <div class="stat-value" id="stat-active-bookings">—</div>
+        <div class="stat-sub">agendamentos ativos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Próximos 30 Dias</div>
+        <div class="stat-value" id="stat-upcoming-bookings">—</div>
+        <div class="stat-sub">agendamentos futuros</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Capacidade Total</div>
+        <div class="stat-value" id="stat-total-seats">—</div>
+        <div class="stat-sub">postos disponíveis</div>
+      </div>
     </div>
+
     <div class="two-col">
       <div class="card">
-        <h3 style="font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:20px;">Ocupação por Sala <span style="font-size:13px;color:var(--muted);font-family:'DM Sans',sans-serif;">(próx. 30 dias)</span></h3>
-        <div class="occupancy-list" id="occupancy-list"><div class="empty-state"><div class="icon">▣</div><p>Sem salas criadas ainda</p></div></div>
+        <div class="card-title">Ocupação por Sala — Próx. 30 dias</div>
+        <div class="occupancy-list" id="occupancy-list">
+          <div class="empty-state"><div class="empty-icon">▣</div><p>Sem salas criadas ainda</p></div>
+        </div>
       </div>
       <div class="card">
-        <h3 style="font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:20px;">Agendamentos Recentes</h3>
-        <div id="recent-bookings" style="display:flex;flex-direction:column;gap:10px;"><div class="empty-state"><div class="icon">◈</div><p>Sem agendamentos</p></div></div>
+        <div class="card-title">Agendamentos Recentes</div>
+        <div id="recent-bookings" style="display:flex;flex-direction:column;gap:8px;">
+          <div class="empty-state"><div class="empty-icon">◈</div><p>Sem agendamentos</p></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ROOMS -->
+  <!-- ── ROOMS ── -->
   <section id="page-rooms" class="page">
     <div class="page-header">
-      <div><h1 class="page-title">Salas</h1><p class="page-subtitle">Gerir salas de reunião e formação</p></div>
+      <div>
+        <div class="page-eyebrow">Gestão</div>
+        <h1 class="page-title">Salas</h1>
+      </div>
       <button class="btn btn-primary" onclick="openRoomModal()">+ Nova Sala</button>
     </div>
     <div class="filters-row">
-      <input type="text" id="room-search" placeholder="🔍 Pesquisar sala..." oninput="renderRooms()">
+      <input type="text" id="room-search" placeholder="Pesquisar sala ou local..." oninput="renderRooms()">
       <select id="room-type-filter" onchange="renderRooms()">
         <option value="">Todos os tipos</option>
         <option value="Reunião">Reunião</option>
@@ -244,22 +858,25 @@
       </select>
     </div>
     <div class="rooms-grid" id="rooms-grid">
-      <div class="empty-state" style="grid-column:1/-1"><div class="icon">▣</div><p>A carregar salas...</p></div>
+      <div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">▣</div><p>A carregar salas...</p></div>
     </div>
   </section>
 
-  <!-- BOOKINGS -->
+  <!-- ── BOOKINGS ── -->
   <section id="page-bookings" class="page">
     <div class="page-header">
-      <div><h1 class="page-title">Agendamentos</h1><p class="page-subtitle">Reservas de salas e ocupações</p></div>
+      <div>
+        <div class="page-eyebrow">Gestão</div>
+        <h1 class="page-title">Agendamentos</h1>
+      </div>
       <div class="page-actions">
-        <button class="btn btn-ghost" onclick="exportCSV()">↓ CSV</button>
-        <button class="btn btn-ghost" onclick="exportExcel()">↓ Excel</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportExcel()">↓ Excel</button>
         <button class="btn btn-primary" onclick="openBookingModal()">+ Novo Agendamento</button>
       </div>
     </div>
     <div class="filters-row">
-      <input type="text" id="booking-search" placeholder="🔍 Pesquisar projeto ou responsável..." oninput="renderBookings()">
+      <input type="text" id="booking-search" placeholder="Pesquisar projeto ou responsável..." oninput="renderBookings()">
       <select id="booking-room-filter" onchange="renderBookings()"><option value="">Todas as salas</option></select>
       <select id="booking-status-filter" onchange="renderBookings()">
         <option value="">Todos os estados</option>
@@ -270,16 +887,26 @@
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Projeto</th><th>Sala</th><th>Início</th><th>Fim</th><th>Pessoas</th><th>Estado</th><th>Ações</th></tr></thead>
-        <tbody id="bookings-table-body"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted);">A carregar...</td></tr></tbody>
+        <thead>
+          <tr>
+            <th>Projeto</th><th>Sala</th><th>Início</th><th>Fim</th>
+            <th>Pessoas</th><th>Estado</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="bookings-table-body">
+          <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted2);">A carregar...</td></tr>
+        </tbody>
       </table>
     </div>
   </section>
 
-  <!-- CALENDAR -->
+  <!-- ── CALENDAR ── -->
   <section id="page-calendar" class="page">
     <div class="page-header">
-      <div><h1 class="page-title">Calendário</h1><p class="page-subtitle">Vista mensal de todos os agendamentos</p></div>
+      <div>
+        <div class="page-eyebrow">Vista</div>
+        <h1 class="page-title">Calendário</h1>
+      </div>
       <button class="btn btn-primary" onclick="openBookingModal()">+ Novo Agendamento</button>
     </div>
     <div class="card">
@@ -288,25 +915,28 @@
         <span class="cal-month" id="cal-month-label"></span>
         <button class="btn btn-ghost btn-sm" onclick="changeMonth(1)">Próximo →</button>
       </div>
-      <div class="calendar-grid" id="calendar-grid">
-        <div class="cal-header">Seg</div><div class="cal-header">Ter</div><div class="cal-header">Qua</div>
-        <div class="cal-header">Qui</div><div class="cal-header">Sex</div><div class="cal-header">Sáb</div><div class="cal-header">Dom</div>
+      <div class="cal-grid" id="calendar-grid">
+        <div class="cal-hdr">Seg</div><div class="cal-hdr">Ter</div><div class="cal-hdr">Qua</div>
+        <div class="cal-hdr">Qui</div><div class="cal-hdr">Sex</div>
+        <div class="cal-hdr">Sáb</div><div class="cal-hdr">Dom</div>
       </div>
     </div>
   </section>
 
 </main>
 
-<!-- MODAL: ROOM -->
+<!-- MODAL: SALA -->
 <div class="modal-overlay" id="room-modal">
   <div class="modal">
     <h2 class="modal-title" id="room-modal-title">Nova Sala</h2>
     <input type="hidden" id="room-edit-id">
     <div class="form-grid">
       <div class="form-group"><label>Nome da Sala *</label><input type="text" id="room-name" placeholder="ex: Sala Lisboa"></div>
-      <div class="form-group"><label>Tipo *</label><select id="room-type"><option value="Reunião">Reunião</option><option value="Formação">Formação</option></select></div>
+      <div class="form-group"><label>Tipo *</label>
+        <select id="room-type"><option value="Reunião">Reunião</option><option value="Formação">Formação</option></select>
+      </div>
       <div class="form-group full"><label>Local / Piso *</label><input type="text" id="room-location" placeholder="ex: Piso 3 — Edifício A"></div>
-      <div class="form-group"><label>Nº de Postos *</label><input type="number" id="room-seats" min="1" placeholder="ex: 12"></div>
+      <div class="form-group"><label>Nº de Postos *</label><input type="number" id="room-seats" min="1" placeholder="12"></div>
       <div class="form-group"><label>Equipamentos</label><input type="text" id="room-equipment" placeholder="ex: Projetor, TV, Webcam"></div>
     </div>
     <div class="form-actions">
@@ -316,7 +946,7 @@
   </div>
 </div>
 
-<!-- MODAL: BOOKING -->
+<!-- MODAL: AGENDAMENTO -->
 <div class="modal-overlay" id="booking-modal">
   <div class="modal">
     <h2 class="modal-title" id="booking-modal-title">Novo Agendamento</h2>
@@ -328,7 +958,7 @@
       <div class="form-group"><label>Data de Fim *</label><input type="date" id="booking-end" onchange="checkConflicts()"></div>
       <div class="form-group"><label>Hora Início</label><input type="time" id="booking-time-start" value="09:00"></div>
       <div class="form-group"><label>Hora Fim</label><input type="time" id="booking-time-end" value="18:00"></div>
-      <div class="form-group"><label>Nº de Pessoas *</label><input type="number" id="booking-people" min="1" placeholder="ex: 8"></div>
+      <div class="form-group"><label>Nº de Pessoas *</label><input type="number" id="booking-people" min="1" placeholder="8"></div>
       <div class="form-group"><label>Responsável</label><input type="text" id="booking-owner" placeholder="ex: Ana Silva"></div>
       <div class="form-group full"><label>Notas</label><textarea id="booking-notes" placeholder="Informações adicionais..."></textarea></div>
     </div>
@@ -343,68 +973,55 @@
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────
+// ── CONFIG ────────────────────────────────────────────
 const SUPABASE_URL = 'https://inkigcninxftoysavoah.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_MBzTerJgUTMVq9bTK0pDpQ_J1QzwCto';
 
-const headers = {
+const HDR = {
   'Content-Type': 'application/json',
   'apikey': SUPABASE_KEY,
   'Authorization': `Bearer ${SUPABASE_KEY}`,
   'Prefer': 'return=representation'
 };
 
-// ── STATE ─────────────────────────────────────────────────
-let rooms = [];
-let bookings = [];
-const today = new Date();
-today.setHours(0,0,0,0);
-let calYear = today.getFullYear();
-let calMonth = today.getMonth();
+// ── STATE ─────────────────────────────────────────────
+let rooms = [], bookings = [];
+const today = new Date(); today.setHours(0,0,0,0);
+let calYear = today.getFullYear(), calMonth = today.getMonth();
 
-// ── SUPABASE API ──────────────────────────────────────────
-async function dbGet(table, query = '') {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}&order=created_at.asc`, { headers });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+// ── DB ────────────────────────────────────────────────
+const db = {
+  get: async (t, q='') => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}?${q}&order=created_at.asc`, {headers:HDR});
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  insert: async (t, d) => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}`, {method:'POST',headers:HDR,body:JSON.stringify(d)});
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  update: async (t, id, d) => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}?id=eq.${id}`, {method:'PATCH',headers:HDR,body:JSON.stringify(d)});
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  del: async (t, id) => {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}?id=eq.${id}`, {method:'DELETE',headers:HDR});
+    if (!r.ok) throw new Error(await r.text());
+  }
+};
+
+// ── SYNC STATUS ───────────────────────────────────────
+function setSyncStatus(s, msg) {
+  document.getElementById('sync-dot').className = 'sync-dot ' + s;
+  document.getElementById('sync-label').textContent = msg;
 }
 
-async function dbInsert(table, data) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-    method: 'POST', headers, body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-async function dbUpdate(table, id, data) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method: 'PATCH', headers, body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-async function dbDelete(table, id) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method: 'DELETE', headers
-  });
-  if (!res.ok) throw new Error(await res.text());
-}
-
-// ── SYNC STATUS ───────────────────────────────────────────
-function setSyncStatus(status, msg) {
-  const dot = document.getElementById('sync-dot');
-  const label = document.getElementById('sync-label');
-  dot.className = 'sync-dot ' + status;
-  label.textContent = msg;
-}
-
-// ── INIT ──────────────────────────────────────────────────
+// ── INIT ─────────────────────────────────────────────
 async function init() {
   showLoading('A ligar à base de dados...');
   try {
@@ -422,8 +1039,8 @@ async function init() {
 
 async function loadAll() {
   [rooms, bookings] = await Promise.all([
-    dbGet('rh_rooms'),
-    dbGet('rh_bookings', 'select=*,rh_rooms(name,location,seats,type)')
+    db.get('rh_rooms'),
+    db.get('rh_bookings', 'select=*')
   ]);
 }
 
@@ -435,55 +1052,50 @@ function renderAll() {
   if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
 }
 
-// ── LOADING ───────────────────────────────────────────────
-function showLoading(msg = 'A processar...') {
-  document.getElementById('loading-msg').textContent = msg;
+// ── LOADING ───────────────────────────────────────────
+function showLoading(msg) {
+  document.getElementById('loading-msg').textContent = msg||'A processar...';
   document.getElementById('loading-overlay').classList.add('show');
 }
-function hideLoading() {
-  document.getElementById('loading-overlay').classList.remove('show');
-}
+function hideLoading() { document.getElementById('loading-overlay').classList.remove('show'); }
 
-// ── NAVIGATION ────────────────────────────────────────────
+// ── NAVIGATION ────────────────────────────────────────
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  const labels = { dashboard: 'dash', rooms: 'salas', bookings: 'agendamentos', calendar: 'cal' };
-  document.querySelectorAll('.nav-item').forEach(n => {
-    if (n.textContent.trim().toLowerCase().includes(labels[id])) n.classList.add('active');
-  });
+  document.getElementById('nav-' + id).classList.add('active');
   if (id === 'calendar') renderCalendar();
 }
 
-// ── TOAST ─────────────────────────────────────────────────
-function toast(msg, isError = false) {
+// ── TOAST ─────────────────────────────────────────────
+function toast(msg, isError=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast' + (isError ? ' error' : '');
   t.style.display = 'block';
-  setTimeout(() => { t.style.display = 'none'; }, 3200);
+  setTimeout(() => t.style.display = 'none', 3200);
 }
 
-// ── MODALS ────────────────────────────────────────────────
+// ── MODALS ────────────────────────────────────────────
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
 });
 
-// ── ROOMS ─────────────────────────────────────────────────
-function openRoomModal(id = null) {
+// ── ROOMS ─────────────────────────────────────────────
+function openRoomModal(id=null) {
   document.getElementById('room-modal-title').textContent = id ? 'Editar Sala' : 'Nova Sala';
-  document.getElementById('room-edit-id').value = id || '';
+  document.getElementById('room-edit-id').value = id||'';
   if (id) {
-    const r = rooms.find(x => x.id === id);
+    const r = rooms.find(x => x.id===id);
     document.getElementById('room-name').value = r.name;
     document.getElementById('room-type').value = r.type;
     document.getElementById('room-location').value = r.location;
     document.getElementById('room-seats').value = r.seats;
-    document.getElementById('room-equipment').value = r.equipment || '';
+    document.getElementById('room-equipment').value = r.equipment||'';
   } else {
-    ['room-name','room-location','room-equipment'].forEach(f => document.getElementById(f).value = '');
+    ['room-name','room-location','room-equipment'].forEach(f => document.getElementById(f).value='');
     document.getElementById('room-type').value = 'Reunião';
     document.getElementById('room-seats').value = '';
   }
@@ -497,132 +1109,99 @@ async function saveRoom() {
   const seats = parseInt(document.getElementById('room-seats').value);
   const equipment = document.getElementById('room-equipment').value.trim();
   const editId = document.getElementById('room-edit-id').value;
-
-  if (!name || !location || !seats) { toast('⚠ Preenche todos os campos obrigatórios.', true); return; }
-
+  if (!name || !location || !seats) { toast('Preenche todos os campos obrigatórios.', true); return; }
   const btn = document.getElementById('btn-save-room');
-  btn.disabled = true;
-  setSyncStatus('syncing', 'A guardar...');
-
+  btn.disabled = true; setSyncStatus('syncing', 'A guardar...');
   try {
-    if (editId) {
-      await dbUpdate('rh_rooms', editId, { name, type, location, seats, equipment });
-      toast('✓ Sala atualizada.');
-    } else {
-      await dbInsert('rh_rooms', { name, type, location, seats, equipment });
-      toast('✓ Sala criada.');
-    }
-    await loadAll();
-    closeModal('room-modal');
-    renderAll();
-    setSyncStatus('synced', 'Sincronizado');
-  } catch(e) {
-    toast('Erro ao guardar sala.', true);
-    setSyncStatus('error', 'Erro');
-    console.error(e);
-  } finally {
-    btn.disabled = false;
-  }
+    if (editId) { await db.update('rh_rooms', editId, {name,type,location,seats,equipment}); toast('Sala atualizada.'); }
+    else { await db.insert('rh_rooms', {name,type,location,seats,equipment}); toast('Sala criada com sucesso.'); }
+    await loadAll(); closeModal('room-modal'); renderAll(); setSyncStatus('synced', 'Sincronizado');
+  } catch(e) { toast('Erro ao guardar sala.', true); setSyncStatus('error','Erro'); console.error(e); }
+  finally { btn.disabled = false; }
 }
 
 async function deleteRoom(id) {
   if (!confirm('Apagar esta sala? Os agendamentos associados serão também removidos.')) return;
-  setSyncStatus('syncing', 'A apagar...');
-  try {
-    await dbDelete('rh_rooms', id);
-    await loadAll();
-    renderAll();
-    toast('✓ Sala removida.');
-    setSyncStatus('synced', 'Sincronizado');
-  } catch(e) {
-    toast('Erro ao apagar sala.', true);
-    setSyncStatus('error', 'Erro');
-  }
+  setSyncStatus('syncing','A apagar...');
+  try { await db.del('rh_rooms', id); await loadAll(); renderAll(); toast('Sala removida.'); setSyncStatus('synced','Sincronizado'); }
+  catch(e) { toast('Erro ao apagar sala.', true); setSyncStatus('error','Erro'); }
 }
 
 function renderRooms() {
-  const q = (document.getElementById('room-search').value || '').toLowerCase();
+  const q = (document.getElementById('room-search').value||'').toLowerCase();
   const tf = document.getElementById('room-type-filter').value;
   const grid = document.getElementById('rooms-grid');
+  const todayStr = today.toISOString().slice(0,10);
   const filtered = rooms.filter(r =>
     (!q || r.name.toLowerCase().includes(q) || r.location.toLowerCase().includes(q)) &&
-    (!tf || r.type === tf)
+    (!tf || r.type===tf)
   );
   if (!filtered.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">▣</div><p>${rooms.length ? 'Nenhuma sala encontrada.' : 'Ainda não há salas. Clica em "Nova Sala".'}</p></div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">▣</div><p>${rooms.length?'Nenhuma sala encontrada.':'Ainda não há salas. Clica em "+ Nova Sala".'}</p></div>`;
     return;
   }
-  const todayStr = today.toISOString().slice(0,10);
   grid.innerHTML = filtered.map(r => {
-    const futureB = bookings.filter(b => b.room_id === r.id && b.end_date >= todayStr).length;
+    const futureB = bookings.filter(b => b.room_id===r.id && b.end_date>=todayStr).length;
     return `<div class="room-card">
-      <div class="room-card-top">
-        <div class="room-type-badge ${r.type==='Formação'?'badge-training':'badge-meeting'}">${r.type}</div>
+      <div class="room-card-header">
+        <div class="room-type-pill ${r.type==='Formação'?'pill-training':'pill-meeting'}">${r.type}</div>
         <div class="room-name">${r.name}</div>
-        <div class="room-location">📍 ${r.location}</div>
-        ${r.equipment ? `<div class="room-location" style="margin-top:4px">🔧 ${r.equipment}</div>` : ''}
+        <div class="room-meta">📍 ${r.location}</div>
+        ${r.equipment?`<div class="room-meta" style="margin-top:3px">🔧 ${r.equipment}</div>`:''}
       </div>
       <div class="room-card-body">
-        <div class="room-stat"><strong>${r.seats}</strong> postos</div>
-        <div class="room-stat" style="font-size:12px;background:rgba(91,141,238,0.1);color:var(--info);padding:4px 8px;border-radius:20px;">${futureB} agendamento${futureB!==1?'s':''}</div>
+        <div>
+          <div class="room-seats">${r.seats}</div>
+          <div class="room-seats-label">postos</div>
+        </div>
+        <div class="room-bookings-pill">${futureB} agendamento${futureB!==1?'s':''}</div>
       </div>
       <div class="room-card-actions">
         <button class="btn btn-ghost btn-sm" onclick="openBookingModal(null,'${r.id}')">+ Agendar</button>
-        <button class="btn btn-ghost btn-sm" onclick="openRoomModal('${r.id}')">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteRoom('${r.id}')">Apagar</button>
+        <button class="btn btn-outline btn-sm" onclick="openRoomModal('${r.id}')">Editar</button>
+        <button class="btn btn-danger-soft btn-sm" onclick="deleteRoom('${r.id}')">✕</button>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── CONFLICT DETECTION ────────────────────────────────────
+// ── CONFLICT ──────────────────────────────────────────
 function checkConflicts() {
   const roomId = document.getElementById('booking-room').value;
-  const start = document.getElementById('booking-start').value;
-  const end = document.getElementById('booking-end').value;
+  const start  = document.getElementById('booking-start').value;
+  const end    = document.getElementById('booking-end').value;
   const editId = document.getElementById('booking-edit-id').value;
-  const box = document.getElementById('conflict-box');
-  const list = document.getElementById('conflict-list');
-
-  if (!roomId || !start || !end) { box.classList.remove('show'); return; }
-
-  const conflicts = bookings.filter(b =>
-    b.room_id === roomId &&
-    b.id !== editId &&
-    b.start_date <= end &&
-    b.end_date >= start
-  );
-
+  const box    = document.getElementById('conflict-box');
+  const list   = document.getElementById('conflict-list');
+  if (!roomId||!start||!end) { box.classList.remove('show'); return; }
+  const conflicts = bookings.filter(b => b.room_id===roomId && b.id!==editId && b.start_date<=end && b.end_date>=start);
   if (!conflicts.length) { box.classList.remove('show'); return; }
-
   box.classList.add('show');
   list.innerHTML = conflicts.map(b =>
-    `<div class="conflict-item">• <strong>${b.project}</strong> — ${formatDate(b.start_date)} → ${formatDate(b.end_date)} (${b.people} pessoas)</div>`
+    `<div class="conflict-item">· <strong>${b.project}</strong> — ${formatDate(b.start_date)} → ${formatDate(b.end_date)} (${b.people} pessoas)</div>`
   ).join('');
 }
 
-// ── BOOKINGS ──────────────────────────────────────────────
-function openBookingModal(id = null, preRoomId = null) {
-  if (!rooms.length) { toast('⚠ Cria pelo menos uma sala primeiro.', true); return; }
+// ── BOOKINGS ──────────────────────────────────────────
+function openBookingModal(id=null, preRoomId=null) {
+  if (!rooms.length) { toast('Cria pelo menos uma sala primeiro.', true); return; }
   document.getElementById('booking-modal-title').textContent = id ? 'Editar Agendamento' : 'Novo Agendamento';
-  document.getElementById('booking-edit-id').value = id || '';
+  document.getElementById('booking-edit-id').value = id||'';
   document.getElementById('conflict-box').classList.remove('show');
-
   const sel = document.getElementById('booking-room');
-  sel.innerHTML = rooms.map(r => `<option value="${r.id}">${r.name} (${r.location})</option>`).join('');
-
+  sel.innerHTML = rooms.map(r => `<option value="${r.id}">${r.name} — ${r.location}</option>`).join('');
   const todayStr = today.toISOString().slice(0,10);
   if (id) {
-    const b = bookings.find(x => x.id === id);
+    const b = bookings.find(x => x.id===id);
     document.getElementById('booking-project').value = b.project;
     sel.value = b.room_id;
     document.getElementById('booking-start').value = b.start_date;
     document.getElementById('booking-end').value = b.end_date;
-    document.getElementById('booking-time-start').value = b.time_start || '09:00';
-    document.getElementById('booking-time-end').value = b.time_end || '18:00';
+    document.getElementById('booking-time-start').value = b.time_start||'09:00';
+    document.getElementById('booking-time-end').value = b.time_end||'18:00';
     document.getElementById('booking-people').value = b.people;
-    document.getElementById('booking-owner').value = b.owner || '';
-    document.getElementById('booking-notes').value = b.notes || '';
+    document.getElementById('booking-owner').value = b.owner||'';
+    document.getElementById('booking-notes').value = b.notes||'';
   } else {
     document.getElementById('booking-project').value = '';
     if (preRoomId) sel.value = preRoomId;
@@ -639,118 +1218,87 @@ function openBookingModal(id = null, preRoomId = null) {
 }
 
 async function saveBooking() {
-  const project = document.getElementById('booking-project').value.trim();
-  const room_id = document.getElementById('booking-room').value;
-  const start_date = document.getElementById('booking-start').value;
-  const end_date = document.getElementById('booking-end').value;
-  const time_start = document.getElementById('booking-time-start').value;
-  const time_end = document.getElementById('booking-time-end').value;
-  const people = parseInt(document.getElementById('booking-people').value);
-  const owner = document.getElementById('booking-owner').value.trim();
-  const notes = document.getElementById('booking-notes').value.trim();
-  const editId = document.getElementById('booking-edit-id').value;
+  const project   = document.getElementById('booking-project').value.trim();
+  const room_id   = document.getElementById('booking-room').value;
+  const start_date= document.getElementById('booking-start').value;
+  const end_date  = document.getElementById('booking-end').value;
+  const time_start= document.getElementById('booking-time-start').value;
+  const time_end  = document.getElementById('booking-time-end').value;
+  const people    = parseInt(document.getElementById('booking-people').value);
+  const owner     = document.getElementById('booking-owner').value.trim();
+  const notes     = document.getElementById('booking-notes').value.trim();
+  const editId    = document.getElementById('booking-edit-id').value;
 
-  if (!project || !room_id || !start_date || !end_date || !people) { toast('⚠ Preenche todos os campos obrigatórios.', true); return; }
-  if (end_date < start_date) { toast('⚠ A data de fim não pode ser anterior à de início.', true); return; }
+  if (!project||!room_id||!start_date||!end_date||!people) { toast('Preenche todos os campos obrigatórios.', true); return; }
+  if (end_date < start_date) { toast('A data de fim não pode ser anterior à de início.', true); return; }
 
-  const room = rooms.find(r => r.id === room_id);
-  if (people > room.seats) { toast(`⚠ A sala "${room.name}" tem apenas ${room.seats} postos.`, true); return; }
+  const room = rooms.find(r => r.id===room_id);
+  if (people > room.seats) { toast(`A sala "${room.name}" tem apenas ${room.seats} postos.`, true); return; }
 
-  // Warn on conflict but allow override
-  const conflicts = bookings.filter(b =>
-    b.room_id === room_id && b.id !== editId && b.start_date <= end_date && b.end_date >= start_date
-  );
-  if (conflicts.length) {
-    if (!confirm(`Existem ${conflicts.length} conflito(s) de agendamento nesta sala. Confirmas mesmo assim?`)) return;
-  }
+  const conflicts = bookings.filter(b => b.room_id===room_id && b.id!==editId && b.start_date<=end_date && b.end_date>=start_date);
+  if (conflicts.length && !confirm(`Existem ${conflicts.length} conflito(s) nesta sala. Confirmas mesmo assim?`)) return;
 
   const btn = document.getElementById('btn-save-booking');
-  btn.disabled = true;
-  setSyncStatus('syncing', 'A guardar...');
-
+  btn.disabled = true; setSyncStatus('syncing','A guardar...');
   try {
-    const data = { project, room_id, start_date, end_date, time_start, time_end, people, owner, notes };
-    if (editId) {
-      await dbUpdate('rh_bookings', editId, data);
-      toast('✓ Agendamento atualizado.');
-    } else {
-      await dbInsert('rh_bookings', data);
-      toast('✓ Agendamento criado.');
-    }
-    await loadAll();
-    closeModal('booking-modal');
-    renderAll();
-    setSyncStatus('synced', 'Sincronizado');
-  } catch(e) {
-    toast('Erro ao guardar agendamento.', true);
-    setSyncStatus('error', 'Erro');
-    console.error(e);
-  } finally {
-    btn.disabled = false;
-  }
+    const data = {project,room_id,start_date,end_date,time_start,time_end,people,owner,notes};
+    if (editId) { await db.update('rh_bookings',editId,data); toast('Agendamento atualizado.'); }
+    else { await db.insert('rh_bookings',data); toast('Agendamento criado com sucesso.'); }
+    await loadAll(); closeModal('booking-modal'); renderAll(); setSyncStatus('synced','Sincronizado');
+  } catch(e) { toast('Erro ao guardar agendamento.', true); setSyncStatus('error','Erro'); console.error(e); }
+  finally { btn.disabled = false; }
 }
 
 async function deleteBooking(id) {
   if (!confirm('Apagar este agendamento?')) return;
-  setSyncStatus('syncing', 'A apagar...');
-  try {
-    await dbDelete('rh_bookings', id);
-    await loadAll();
-    renderAll();
-    toast('✓ Agendamento removido.');
-    setSyncStatus('synced', 'Sincronizado');
-  } catch(e) {
-    toast('Erro ao apagar agendamento.', true);
-    setSyncStatus('error', 'Erro');
-  }
+  setSyncStatus('syncing','A apagar...');
+  try { await db.del('rh_bookings',id); await loadAll(); renderAll(); toast('Agendamento removido.'); setSyncStatus('synced','Sincronizado'); }
+  catch(e) { toast('Erro ao apagar.', true); setSyncStatus('error','Erro'); }
 }
 
-function bookingStatus(b) {
+function bStatus(b) {
   const s = new Date(b.start_date); s.setHours(0,0,0,0);
-  const e = new Date(b.end_date); e.setHours(23,59,59,999);
-  if (today >= s && today <= e) return 'active';
-  if (s > today) return 'upcoming';
+  const e = new Date(b.end_date);   e.setHours(23,59,59,999);
+  if (today>=s && today<=e) return 'active';
+  if (s>today) return 'upcoming';
   return 'past';
 }
 
-function statusLabel(s) {
-  if (s==='active') return '<span class="status-badge status-active">● Em curso</span>';
-  if (s==='upcoming') return '<span class="status-badge status-upcoming">◆ Futuro</span>';
-  return '<span class="status-badge status-past">○ Passado</span>';
+function statusPill(s) {
+  const map = { active:'pill-active', upcoming:'pill-upcoming', past:'pill-past' };
+  const label = { active:'Em curso', upcoming:'Futuro', past:'Passado' };
+  return `<span class="status-pill ${map[s]}">${label[s]}</span>`;
 }
 
 function renderBookings() {
-  const q = (document.getElementById('booking-search').value || '').toLowerCase();
+  const q  = (document.getElementById('booking-search').value||'').toLowerCase();
   const rf = document.getElementById('booking-room-filter').value;
   const sf = document.getElementById('booking-status-filter').value;
   const tbody = document.getElementById('bookings-table-body');
-
   const filtered = bookings.filter(b => {
-    const s = bookingStatus(b);
+    const s = bStatus(b);
     return (!q || b.project.toLowerCase().includes(q) || (b.owner||'').toLowerCase().includes(q)) &&
-           (!rf || b.room_id === rf) &&
-           (!sf || s === sf);
+           (!rf || b.room_id===rf) && (!sf || s===sf);
   }).sort((a,b) => b.start_date.localeCompare(a.start_date));
 
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted);">Nenhum agendamento encontrado.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted2);font-weight:300;">Nenhum agendamento encontrado.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = filtered.map(b => {
-    const room = rooms.find(r => r.id === b.room_id);
-    const s = bookingStatus(b);
-    const days = Math.round((new Date(b.end_date) - new Date(b.start_date)) / 86400000) + 1;
+    const room = rooms.find(r => r.id===b.room_id);
+    const days = Math.round((new Date(b.end_date)-new Date(b.start_date))/86400000)+1;
     return `<tr>
-      <td><strong>${b.project}</strong>${b.owner ? `<br><span style="font-size:12px;color:var(--muted);">${b.owner}</span>` : ''}</td>
-      <td>${room ? room.name : '—'}<br><span style="font-size:12px;color:var(--muted);">${room ? room.location : ''}</span></td>
-      <td>${formatDate(b.start_date)}<br><span style="font-size:12px;color:var(--muted);">${b.time_start}</span></td>
-      <td>${formatDate(b.end_date)}<br><span style="font-size:12px;color:var(--muted);">${b.time_end} · ${days}d</span></td>
+      <td><strong style="font-weight:600;">${b.project}</strong>${b.owner?`<br><span style="font-size:11px;color:var(--muted2);">${b.owner}</span>`:''}</td>
+      <td>${room?room.name:'—'}<br><span style="font-size:11px;color:var(--muted2);">${room?room.location:''}</span></td>
+      <td>${formatDate(b.start_date)}<br><span style="font-size:11px;color:var(--muted2);">${b.time_start}</span></td>
+      <td>${formatDate(b.end_date)}<br><span style="font-size:11px;color:var(--muted2);">${b.time_end} · ${days}d</span></td>
       <td>${b.people} pessoas</td>
-      <td>${statusLabel(s)}</td>
+      <td>${statusPill(bStatus(b))}</td>
       <td style="display:flex;gap:6px;">
         <button class="btn btn-ghost btn-sm" onclick="openBookingModal('${b.id}')">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteBooking('${b.id}')">✕</button>
+        <button class="btn btn-danger-soft btn-sm" onclick="deleteBooking('${b.id}')">✕</button>
       </td>
     </tr>`;
   }).join('');
@@ -759,169 +1307,143 @@ function renderBookings() {
 function updateBookingRoomFilter() {
   const sel = document.getElementById('booking-room-filter');
   const val = sel.value;
-  sel.innerHTML = `<option value="">Todas as salas</option>` + rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+  sel.innerHTML = `<option value="">Todas as salas</option>` + rooms.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
   if (val) sel.value = val;
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────
+// ── DASHBOARD ─────────────────────────────────────────
 function renderDashboard() {
   document.getElementById('stat-total-rooms').textContent = rooms.length;
   const todayStr = today.toISOString().slice(0,10);
-  const activeB = bookings.filter(b => bookingStatus(b) === 'active').length;
-  document.getElementById('stat-active-bookings').textContent = activeB;
-  const in30 = new Date(); in30.setDate(in30.getDate() + 30);
+  const in30 = new Date(); in30.setDate(in30.getDate()+30);
   const in30Str = in30.toISOString().slice(0,10);
-  const upcoming = bookings.filter(b => bookingStatus(b) === 'upcoming' && b.start_date <= in30Str).length;
-  document.getElementById('stat-upcoming-bookings').textContent = upcoming;
-  const totalSeats = rooms.reduce((s, r) => s + r.seats, 0);
-  document.getElementById('stat-total-seats').textContent = totalSeats;
+  document.getElementById('stat-active-bookings').textContent = bookings.filter(b=>bStatus(b)==='active').length;
+  document.getElementById('stat-upcoming-bookings').textContent = bookings.filter(b=>bStatus(b)==='upcoming'&&b.start_date<=in30Str).length;
+  document.getElementById('stat-total-seats').textContent = rooms.reduce((s,r)=>s+r.seats,0);
 
-  // Occupancy bars
   const ol = document.getElementById('occupancy-list');
   if (!rooms.length) {
-    ol.innerHTML = `<div class="empty-state"><div class="icon">▣</div><p>Sem salas criadas ainda</p></div>`;
+    ol.innerHTML = `<div class="empty-state"><div class="empty-icon">▣</div><p>Sem salas criadas ainda</p></div>`;
   } else {
     ol.innerHTML = rooms.map(r => {
-      const rB = bookings.filter(b => b.room_id === r.id && b.end_date >= todayStr && b.start_date <= in30Str);
-      let occupiedDays = 0;
+      const rB = bookings.filter(b=>b.room_id===r.id && b.end_date>=todayStr && b.start_date<=in30Str);
+      let days = 0;
       rB.forEach(b => {
-        const s = new Date(Math.max(new Date(b.start_date), today));
-        const e = new Date(Math.min(new Date(b.end_date), in30));
-        occupiedDays += Math.max(0, Math.round((e - s) / 86400000) + 1);
+        const s = new Date(Math.max(new Date(b.start_date),today));
+        const e = new Date(Math.min(new Date(b.end_date),in30));
+        days += Math.max(0, Math.round((e-s)/86400000)+1);
       });
-      const pct = Math.min(100, Math.round((occupiedDays / 30) * 100));
-      const cls = pct >= 80 ? 'high' : pct >= 40 ? 'medium' : 'low';
+      const pct = Math.min(100, Math.round((days/30)*100));
+      const cls = pct>=80?'bar-high':pct>=40?'bar-medium':'bar-low';
       return `<div class="occupancy-item">
-        <div class="occupancy-name">${r.name}<br><span style="font-size:11px;color:var(--muted);">${r.location}</span></div>
+        <div class="occupancy-name">${r.name}<div class="occupancy-loc">${r.location}</div></div>
         <div class="occupancy-bar-wrap"><div class="occupancy-bar ${cls}" style="width:${pct}%"></div></div>
         <div class="occupancy-pct">${pct}%</div>
       </div>`;
     }).join('');
   }
 
-  // Recent bookings
   const rb = document.getElementById('recent-bookings');
-  const recent = [...bookings].sort((a,b) => b.created_at.localeCompare(a.created_at)).slice(0,5);
+  const recent = [...bookings].sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,5);
   if (!recent.length) {
-    rb.innerHTML = `<div class="empty-state"><div class="icon">◈</div><p>Sem agendamentos</p></div>`;
+    rb.innerHTML = `<div class="empty-state"><div class="empty-icon">◈</div><p>Sem agendamentos</p></div>`;
   } else {
     rb.innerHTML = recent.map(b => {
-      const room = rooms.find(r => r.id === b.room_id);
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;gap:10px;">
+      const room = rooms.find(r=>r.id===b.room_id);
+      return `<div class="recent-item">
         <div>
-          <div style="font-size:14px;font-weight:500;">${b.project}</div>
-          <div style="font-size:12px;color:var(--muted);">${room?room.name:'—'} · ${formatDate(b.start_date)}${b.start_date!==b.end_date?' → '+formatDate(b.end_date):''}</div>
+          <div class="recent-project">${b.project}</div>
+          <div class="recent-meta">${room?room.name:'—'} · ${formatDate(b.start_date)}${b.start_date!==b.end_date?' → '+formatDate(b.end_date):''}</div>
         </div>
-        ${statusLabel(bookingStatus(b))}
+        ${statusPill(bStatus(b))}
       </div>`;
     }).join('');
   }
 }
 
-// ── CALENDAR ──────────────────────────────────────────────
+// ── CALENDAR ──────────────────────────────────────────
 function renderCalendar() {
   const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   document.getElementById('cal-month-label').textContent = `${months[calMonth]} ${calYear}`;
   const firstDay = new Date(calYear, calMonth, 1);
   const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-  const startOffset = (firstDay.getDay() + 6) % 7;
+  const startOffset = (firstDay.getDay()+6)%7;
   const todayStr = today.toISOString().slice(0,10);
-
   const grid = document.getElementById('calendar-grid');
-  const headers = Array.from(grid.querySelectorAll('.cal-header'));
+  const headers = Array.from(grid.querySelectorAll('.cal-hdr'));
   grid.innerHTML = '';
   headers.forEach(h => grid.appendChild(h));
-
-  for (let i = 0; i < startOffset; i++) {
-    const div = document.createElement('div'); div.className = 'cal-day empty'; grid.appendChild(div);
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
+  for (let i=0; i<startOffset; i++) { const d=document.createElement('div'); d.className='cal-day empty'; grid.appendChild(d); }
+  for (let d=1; d<=daysInMonth; d++) {
     const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = dateStr === todayStr;
-    const dayB = bookings.filter(b => b.start_date <= dateStr && b.end_date >= dateStr);
+    const isToday = dateStr===todayStr;
+    const dayB = bookings.filter(b=>b.start_date<=dateStr && b.end_date>=dateStr);
     const div = document.createElement('div');
-    div.className = 'cal-day' + (isToday ? ' today' : '');
+    div.className = 'cal-day'+(isToday?' today':'');
     div.innerHTML = `<div class="cal-day-num">${d}</div>` +
-      dayB.slice(0,3).map(b => `<div class="cal-event" title="${b.project} (${rooms.find(r=>r.id===b.room_id)?.name||''})">${b.project}</div>`).join('') +
-      (dayB.length > 3 ? `<div style="font-size:10px;color:var(--muted);padding:1px 4px;">+${dayB.length-3} mais</div>` : '');
+      dayB.slice(0,3).map(b=>{
+        const room = rooms.find(r=>r.id===b.room_id);
+        return `<div class="cal-event" title="${b.project} — ${room?room.name:''}">${b.project}</div>`;
+      }).join('') +
+      (dayB.length>3?`<div style="font-size:9px;color:var(--muted2);padding:1px 4px;">+${dayB.length-3}</div>`:'');
     grid.appendChild(div);
   }
 }
 
 function changeMonth(dir) {
-  calMonth += dir;
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  if (calMonth < 0) { calMonth = 11; calYear--; }
+  calMonth+=dir;
+  if (calMonth>11){calMonth=0;calYear++;}
+  if (calMonth<0){calMonth=11;calYear--;}
   renderCalendar();
 }
 
-// ── EXPORT ────────────────────────────────────────────────
+// ── EXPORT ────────────────────────────────────────────
 function exportCSV() {
   if (!bookings.length) { toast('Sem agendamentos para exportar.', true); return; }
-  const rows = [['Projeto','Responsável','Sala','Local','Data Início','Data Fim','Hora Início','Hora Fim','Nº Pessoas','Notas','Estado']];
+  const stateMap = {active:'Em curso',upcoming:'Futuro',past:'Passado'};
+  const rows = [['Projeto','Responsável','Sala','Local','Tipo','Data Início','Data Fim','Hora Início','Hora Fim','Nº Pessoas','Capacidade','Notas','Estado']];
   bookings.forEach(b => {
-    const room = rooms.find(r => r.id === b.room_id);
-    const s = bookingStatus(b);
-    const stateMap = { active: 'Em curso', upcoming: 'Futuro', past: 'Passado' };
-    rows.push([b.project, b.owner||'', room?.name||'', room?.location||'', b.start_date, b.end_date, b.time_start, b.time_end, b.people, b.notes||'', stateMap[s]]);
+    const room = rooms.find(r=>r.id===b.room_id);
+    rows.push([b.project,b.owner||'',room?.name||'',room?.location||'',room?.type||'',b.start_date,b.end_date,b.time_start,b.time_end,b.people,room?.seats||'',b.notes||'',stateMap[bStatus(b)]]);
   });
-  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  downloadFile('roomhub_agendamentos.csv', 'text/csv;charset=utf-8;', '\uFEFF' + csv);
-  toast('✓ CSV exportado.');
+  const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dlFile('TP_RoomHub_Agendamentos.csv','text/csv;charset=utf-8;','\uFEFF'+csv);
+  toast('CSV exportado com sucesso.');
 }
 
 function exportExcel() {
   if (!bookings.length) { toast('Sem agendamentos para exportar.', true); return; }
-  const stateMap = { active: 'Em curso', upcoming: 'Futuro', past: 'Passado' };
+  const stateMap = {active:'Em curso',upcoming:'Futuro',past:'Passado'};
   const rows = bookings.map(b => {
-    const room = rooms.find(r => r.id === b.room_id);
-    return {
-      'Projeto': b.project,
-      'Responsável': b.owner||'',
-      'Sala': room?.name||'',
-      'Local': room?.location||'',
-      'Tipo Sala': room?.type||'',
-      'Data Início': b.start_date,
-      'Data Fim': b.end_date,
-      'Hora Início': b.time_start,
-      'Hora Fim': b.time_end,
-      'Nº Pessoas': b.people,
-      'Capacidade Sala': room?.seats||'',
-      'Notas': b.notes||'',
-      'Estado': stateMap[bookingStatus(b)]
-    };
+    const room = rooms.find(r=>r.id===b.room_id);
+    return {'Projeto':b.project,'Responsável':b.owner||'','Sala':room?.name||'','Local':room?.location||'','Tipo':room?.type||'','Data Início':b.start_date,'Data Fim':b.end_date,'Hora Início':b.time_start,'Hora Fim':b.time_end,'Nº Pessoas':b.people,'Capacidade':room?.seats||'','Notas':b.notes||'','Estado':stateMap[bStatus(b)]};
   });
-
-  // Build HTML table for Excel
   const cols = Object.keys(rows[0]);
-  let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
-<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Agendamentos</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
-<body><table border="1">`;
-  html += '<tr>' + cols.map(c => `<th style="background:#1a1917;color:#e8c547;font-weight:bold;padding:8px;">${c}</th>`).join('') + '</tr>';
+  let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table border="1">`;
+  html += '<tr>'+cols.map(c=>`<th style="background:#4B4C6A;color:#fff;font-weight:bold;padding:8px;font-family:Arial;font-size:11px;">${c}</th>`).join('')+'</tr>';
   rows.forEach((r,i) => {
-    html += '<tr>' + cols.map(c => `<td style="padding:6px;background:${i%2===0?'#ffffff':'#f5f5f5'}">${r[c]}</td>`).join('') + '</tr>';
+    html += '<tr>'+cols.map(c=>`<td style="padding:6px;background:${i%2===0?'#ffffff':'#f5f3f1'};font-family:Arial;font-size:11px;">${r[c]}</td>`).join('')+'</tr>';
   });
   html += '</table></body></html>';
-  downloadFile('roomhub_agendamentos.xls', 'application/vnd.ms-excel', html);
-  toast('✓ Excel exportado.');
+  dlFile('TP_RoomHub_Agendamentos.xls','application/vnd.ms-excel',html);
+  toast('Excel exportado com sucesso.');
 }
 
-function downloadFile(filename, mimeType, content) {
-  const blob = new Blob([content], { type: mimeType });
+function dlFile(name, mime, content) {
+  const blob = new Blob([content],{type:mime});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
+  const a = document.createElement('a'); a.href=url; a.download=name; a.click();
   URL.revokeObjectURL(url);
 }
 
-// ── HELPERS ───────────────────────────────────────────────
+// ── HELPERS ───────────────────────────────────────────
 function formatDate(str) {
   if (!str) return '';
   const [y,m,d] = str.split('-');
   return `${d}/${m}/${y}`;
 }
 
-// ── START ─────────────────────────────────────────────────
+// ── START ─────────────────────────────────────────────
 init();
 </script>
 </body>
