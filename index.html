@@ -1,1450 +1,784 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TP Room Management Hub</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@200;300;400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg:          #ece9e7;
-    --surface:     #ffffff;
-    --surface2:    #f5f3f1;
-    --border:      #d4d2ca;
-    --border2:     #c0bdb8;
-    --tp-slate:    #4B4C6A;
-    --tp-slate-lt: #848dad;
-    --tp-pink:     #ff0082;
-    --text:        #1a1a2e;
-    --muted:       #918e81;
-    --muted2:      #b0ada6;
-    --success:     #2d7a5a;
-    --success-bg:  #e8f4ee;
-    --info:        #2a4fa0;
-    --info-bg:     #e8eef8;
-    --danger:      #a02a2a;
-    --danger-bg:   #f8e8e8;
-    --warning:     #7a5500;
-    --warning-bg:  #fdf3e0;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'Nunito Sans', sans-serif;
-    font-weight: 300;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-  }
-
-  /* ── SIDEBAR ─────────────────────────────── */
-  .sidebar {
-    width: 260px;
-    min-height: 100vh;
-    background: var(--tp-slate);
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    z-index: 100;
-  }
-
-  .logo-area {
-    padding: 32px 28px 28px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-
-  /* TP Logo SVG inline */
-  .tp-logo {
-    width: 36px;
-    height: 36px;
-    margin-bottom: 14px;
-  }
-
-  .app-name {
-    font-size: 13px;
-    font-weight: 700;
-    color: #ffffff;
-    letter-spacing: 0.5px;
-    line-height: 1.3;
-  }
-
-  .app-name span {
-    display: block;
-    font-size: 10px;
-    font-weight: 300;
-    color: rgba(255,255,255,0.5);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-top: 3px;
-  }
-
-  .nav {
-    padding: 20px 16px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 400;
-    color: rgba(255,255,255,0.55);
-    transition: all 0.15s;
-    border: none;
-    background: none;
-    width: 100%;
-    text-align: left;
-    letter-spacing: 0.2px;
-  }
-
-  .nav-item svg { opacity: 0.6; flex-shrink: 0; }
-  .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
-  .nav-item:hover svg { opacity: 1; }
-  .nav-item.active { background: rgba(255,255,255,0.14); color: #fff; font-weight: 600; }
-  .nav-item.active svg { opacity: 1; }
-
-  .nav-section-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: rgba(255,255,255,0.25);
-    padding: 16px 14px 6px;
-    font-weight: 600;
-  }
-
-  .sync-area {
-    padding: 16px 28px 24px;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .sync-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    flex-shrink: 0;
-    transition: background 0.3s;
-  }
-
-  .sync-dot.synced { background: #52b788; }
-  .sync-dot.syncing { background: #f0a050; animation: pulse 1s infinite; }
-  .sync-dot.error { background: #e05252; }
-
-  .sync-text {
-    font-size: 11px;
-    color: rgba(255,255,255,0.35);
-  }
-
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-  /* ── MAIN ────────────────────────────────── */
-  .main {
-    margin-left: 260px;
-    flex: 1;
-    padding: 48px 48px 64px;
-    min-height: 100vh;
-  }
-
-  .page { display: none; }
-  .page.active { display: block; }
-
-  .page-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 40px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border);
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-
-  .page-title {
-    font-size: 30px;
-    font-weight: 200;
-    color: var(--tp-slate);
-    letter-spacing: -0.5px;
-    line-height: 1.1;
-  }
-
-  .page-eyebrow {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 2.5px;
-    color: var(--tp-pink);
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-
-  .page-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-
-  /* ── BUTTONS ─────────────────────────────── */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 10px 22px;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'Nunito Sans', sans-serif;
-    cursor: pointer;
-    border: none;
-    transition: all 0.15s;
-    letter-spacing: 0.3px;
-  }
-
-  .btn-primary {
-    background: var(--tp-slate);
-    color: #fff;
-  }
-
-  .btn-primary:hover {
-    background: #3a3b56;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(75,76,106,0.25);
-  }
-
-  .btn-outline {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border2);
-  }
-
-  .btn-outline:hover { color: var(--text); border-color: var(--tp-slate-lt); }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-  }
-
-  .btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
-
-  .btn-danger-soft {
-    background: transparent;
-    color: var(--danger);
-    border: 1px solid #e8c0c0;
-  }
-
-  .btn-danger-soft:hover { background: var(--danger-bg); }
-  .btn-sm { padding: 6px 14px; font-size: 12px; }
-  .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-
-  /* ── STAT CARDS ──────────────────────────── */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 24px 24px 20px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--tp-slate);
-  }
-
-  .stat-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--muted);
-    font-weight: 600;
-    margin-bottom: 10px;
-  }
-
-  .stat-value {
-    font-size: 38px;
-    font-weight: 200;
-    color: var(--tp-slate);
-    line-height: 1;
-    letter-spacing: -1px;
-  }
-
-  .stat-sub {
-    font-size: 11px;
-    color: var(--muted2);
-    margin-top: 8px;
-  }
-
-  /* ── CARDS ───────────────────────────────── */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 28px;
-  }
-
-  .card-title {
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--tp-slate);
-    margin-bottom: 20px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
-  /* ── ROOM CARDS ──────────────────────────── */
-  .rooms-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-    gap: 16px;
-  }
-
-  .room-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    transition: all 0.2s;
-    position: relative;
-  }
-
-  .room-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 3px;
-    height: 100%;
-    background: var(--tp-slate);
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  .room-card:hover { border-color: var(--tp-slate-lt); box-shadow: 0 4px 20px rgba(75,76,106,0.1); }
-  .room-card:hover::after { opacity: 1; }
-
-  .room-card-header {
-    padding: 20px 22px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .room-type-pill {
-    display: inline-block;
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    padding: 3px 9px;
-    border-radius: 2px;
-    margin-bottom: 10px;
-  }
-
-  .pill-meeting { background: var(--info-bg); color: var(--info); }
-  .pill-training { background: var(--success-bg); color: var(--success); }
-
-  .room-name {
-    font-size: 18px;
-    font-weight: 300;
-    color: var(--tp-slate);
-    margin-bottom: 4px;
-  }
-
-  .room-meta {
-    font-size: 12px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .room-card-body {
-    padding: 14px 22px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--surface2);
-  }
-
-  .room-seats {
-    font-size: 22px;
-    font-weight: 200;
-    color: var(--tp-slate);
-  }
-
-  .room-seats-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-  }
-
-  .room-bookings-pill {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--info);
-    background: var(--info-bg);
-    padding: 4px 10px;
-    border-radius: 12px;
-  }
-
-  .room-card-actions {
-    padding: 12px 22px;
-    display: flex;
-    gap: 8px;
-  }
-
-  /* ── OCCUPANCY ───────────────────────────── */
-  .occupancy-list { display: flex; flex-direction: column; gap: 14px; }
-
-  .occupancy-item { display: flex; align-items: center; gap: 14px; }
-
-  .occupancy-name {
-    width: 150px;
-    flex-shrink: 0;
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--text);
-  }
-
-  .occupancy-loc {
-    font-size: 11px;
-    color: var(--muted2);
-    font-weight: 300;
-  }
-
-  .occupancy-bar-wrap {
-    flex: 1;
-    height: 5px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .occupancy-bar {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.8s ease;
-  }
-
-  .bar-high { background: var(--danger); }
-  .bar-medium { background: var(--tp-slate); }
-  .bar-low { background: var(--success); }
-
-  .occupancy-pct {
-    width: 36px;
-    text-align: right;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-  }
-
-  /* ── RECENT BOOKINGS ─────────────────────── */
-  .recent-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 14px;
-    background: var(--surface2);
-    border-radius: 4px;
-    border-left: 2px solid var(--border2);
-    gap: 10px;
-  }
-
-  .recent-project { font-size: 13px; font-weight: 600; color: var(--text); }
-  .recent-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-  /* ── TABLE ───────────────────────────────── */
-  .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    overflow-x: auto;
-  }
-
-  table { width: 100%; border-collapse: collapse; min-width: 720px; }
-
-  thead { background: var(--tp-slate); }
-
-  th {
-    text-align: left;
-    padding: 12px 16px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: rgba(255,255,255,0.7);
-    white-space: nowrap;
-  }
-
-  td {
-    padding: 14px 16px;
-    font-size: 13px;
-    color: var(--text);
-    border-top: 1px solid var(--border);
-    font-weight: 300;
-  }
-
-  tr:hover td { background: var(--surface2); }
-
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 3px 9px;
-    border-radius: 2px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-  }
-
-  .pill-active   { background: var(--success-bg); color: var(--success); }
-  .pill-upcoming { background: var(--info-bg);    color: var(--info); }
-  .pill-past     { background: var(--surface2);   color: var(--muted); }
-
-  /* ── FILTERS ─────────────────────────────── */
-  .filters-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-
-  .filters-row input,
-  .filters-row select {
-    width: auto;
-    flex: 1;
-    min-width: 160px;
-  }
-
-  /* ── FORM ────────────────────────────────── */
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .form-group { display: flex; flex-direction: column; gap: 5px; }
-  .form-group.full { grid-column: 1 / -1; }
-
-  label {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-  }
-
-  input, select, textarea {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 10px 13px;
-    color: var(--text);
-    font-size: 13px;
-    font-family: 'Nunito Sans', sans-serif;
-    font-weight: 300;
-    transition: border-color 0.15s;
-    outline: none;
-    width: 100%;
-  }
-
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--tp-slate);
-    background: #fff;
-  }
-
-  select option { background: var(--surface2); }
-  textarea { resize: vertical; min-height: 80px; }
-
-  .form-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-top: 24px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-  }
-
-  /* ── CONFLICT ────────────────────────────── */
-  .conflict-box {
-    background: var(--danger-bg);
-    border: 1px solid #e8c0c0;
-    border-left: 3px solid var(--danger);
-    border-radius: 4px;
-    padding: 12px 16px;
-    margin-top: 14px;
-    display: none;
-  }
-
-  .conflict-box.show { display: block; }
-  .conflict-title { font-size: 12px; font-weight: 700; color: var(--danger); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .conflict-item { font-size: 12px; color: var(--text); padding: 2px 0; font-weight: 300; }
-
-  /* ── MODAL ───────────────────────────────── */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(75,76,106,0.5);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(3px);
-  }
-
-  .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 36px;
-    width: 100%;
-    max-width: 560px;
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: modalIn 0.18s ease;
-    position: relative;
-  }
-
-  .modal::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: var(--tp-slate);
-    border-radius: 6px 6px 0 0;
-  }
-
-  @keyframes modalIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-
-  .modal-title {
-    font-size: 22px;
-    font-weight: 200;
-    color: var(--tp-slate);
-    margin-bottom: 24px;
-    letter-spacing: -0.3px;
-  }
-
-  /* ── CALENDAR ────────────────────────────── */
-  .cal-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-  .cal-month { font-size: 18px; font-weight: 300; color: var(--tp-slate); }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-  .cal-hdr { text-align: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 8px 4px; }
-  .cal-day { background: var(--surface2); border-radius: 4px; padding: 8px 6px; min-height: 72px; cursor: pointer; transition: background 0.15s; border: 1px solid transparent; }
-  .cal-day:hover { background: var(--border); }
-  .cal-day.today { border-color: var(--tp-slate); }
-  .cal-day.empty { background: transparent; cursor: default; border-color: transparent; }
-  .cal-day-num { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
-  .cal-day.today .cal-day-num { color: var(--tp-slate); font-weight: 700; }
-  .cal-event { font-size: 9px; background: var(--tp-slate); color: #fff; border-radius: 2px; padding: 2px 5px; margin-bottom: 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600; letter-spacing: 0.2px; }
-
-  /* ── LOADING ─────────────────────────────── */
-  .loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(236,233,231,0.9);
-    z-index: 2000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .loading-overlay.show { display: flex; }
-
-  .spinner {
-    width: 36px; height: 36px;
-    border: 2px solid var(--border2);
-    border-top-color: var(--tp-slate);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin { to{transform:rotate(360deg)} }
-  .loading-text { font-size: 13px; color: var(--muted); font-weight: 300; }
-
-  /* ── TOAST ───────────────────────────────── */
-  .toast {
-    position: fixed;
-    bottom: 28px;
-    right: 28px;
-    background: var(--tp-slate);
-    color: #fff;
-    padding: 13px 20px;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: 300;
-    z-index: 9999;
-    display: none;
-    animation: slideUp 0.2s ease;
-    box-shadow: 0 8px 24px rgba(75,76,106,0.25);
-    max-width: 360px;
-  }
-
-  .toast.error { background: var(--danger); }
-  @keyframes slideUp { from{transform:translateY(12px);opacity:0} to{transform:translateY(0);opacity:1} }
-
-  /* ── EMPTY STATE ─────────────────────────── */
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted2);
-  }
-
-  .empty-state .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
-  .empty-state p { font-size: 14px; font-weight: 300; }
-
-  @media (max-width: 900px) {
-    .stats-row { grid-template-columns: repeat(2,1fr); }
-    .two-col { grid-template-columns: 1fr; }
-    .main { padding: 28px 20px; }
-  }
-</style>
-</head>
-<body>
-
-<!-- LOADING -->
-<div class="loading-overlay" id="loading-overlay">
-  <div class="spinner"></div>
-  <div class="loading-text" id="loading-msg">A ligar à base de dados...</div>
-</div>
-
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="logo-area">
-    <!-- TP Logo SVG — white version on dark background -->
-    <svg class="tp-logo" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- T: small diagonal notch top-left, then horizontal bar, then vertical stem -->
-      <!-- Notch arrow: top-left corner cut at 45deg -->
-      <polygon points="
-        8,22
-        22,8
-        58,8
-        58,22
-        38,22
-        38,82
-        22,82
-        22,22
-      " fill="white"/>
-      <!-- P: vertical bar + half-circle bump -->
-      <rect x="66" y="8" width="14" height="74" fill="white"/>
-      <path d="M80,8 Q100,8 100,30 Q100,52 80,52 Z" fill="white"/>
+import { useState, useMemo, useEffect } from "react";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "https://inkigcninxftoysavoah.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlua2lnY25pbnhmdG95c2F2b2FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODY2NjIsImV4cCI6MjA5MTY2MjY2Mn0.aB_FdPpurWshXbeDcyQTQxpmDf9H2X8VHiwHl8flKOo";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const EDIFICIOS    = ["Tejo","Oceanário","Nations","Explorer","Atlântico","Oriente Green Campus","Open","Douro","Covilhã","Geral"];
+const TIPOS_PEDIDO = ["Aluguer de armazém","Logística e transporte","Manutenção","Facilities planning","IT & Tecnologia","Material de Escritório","Marketing & Comunicação","Formação & Desenvolvimento","Outros"];
+const STATUS_OPTS  = ["Open","In Approval","Closed","Rejected"];
+const EQUIPA = [
+  { nome:"Joel da Ponte",  email:"joel.teixeira@teleperformance.com" },
+  { nome:"Diogo Teixeira", email:"diogo.santosteixeira@teleperformance.com" },
+  { nome:"Vitor Santos",   email:"vitor.santos@teleperformance.com" },
+];
+const NOMES = EQUIPA.map(p => p.nome);
+
+// ── TP Brand Guidelines Color Palette ────────────────────────────────────────
+// Primary: TP Dark Slate. Neutrals dominate. Pink only as micro-detail.
+const C = {
+  // Backgrounds
+  bg:           "#ECE9E7", // TP Pastel Sand
+  surface:      "#FFFFFF", // White
+  surface2:     "#F5F3F1", // between pastel sand and white
+  sidebar:      "#4B4C6A", // TP Dark Slate — primary color per guidelines
+
+  // Borders
+  border:       "#D4D2CA", // TP Sand
+  border2:      "#C8C6BE", // slightly darker sand
+
+  // Text
+  text:         "#1A1A18", // near Black
+  text2:        "#4B4C6A", // TP Dark Slate
+  text3:        "#918E81", // TP Dark Sand (muted)
+  textInverse:  "#FFFFFF",
+
+  // Sidebar text
+  sideActive:   "#FFFFFF",
+  sideText:     "#848DAD", // TP Slate
+  sideAccent:   "#D4D2CA", // TP Sand — active indicator
+
+  // Semantic (muted, per guidelines)
+  green:        "#3A6A4A",
+  greenLight:   "#EAF2EC",
+  amber:        "#918E81", // TP Dark Sand — used as warning tone
+  amberLight:   "#F5F0E8",
+  red:          "#5F365E", // TP Burgundy
+  redLight:     "#F5EEF5",
+
+  // OPEX / CAPEX distinction
+  opex:         "#4B4C6A", // TP Dark Slate
+  opexLight:    "#E2E0E8", // TP Pastel Violet-ish
+  capex:        "#706398", // TP Muted Violet
+  capexLight:   "#EAE7F0",
+
+  // Pink — only for micro-details per guidelines
+  pink:         "#FF0082", // TP Pink — use sparingly
+};
+
+const STATUS_COLORS = {
+  "Open":        { text:C.green,  badge:C.greenLight,  dot:C.green  },
+  "In Approval": { text:C.opex,   badge:C.opexLight,   dot:C.opex   },
+  "Closed":      { text:C.text3,  badge:"#EDEAE3",     dot:"#918E81"},
+  "Rejected":    { text:C.red,    badge:C.redLight,    dot:C.red    },
+};
+const TYPE_COLOR = { OPEX: C.opex,  CAPEX: C.capex  };
+const TYPE_BG    = { OPEX: C.opexLight, CAPEX: C.capexLight };
+
+const formatEUR = v => new Intl.NumberFormat("pt-PT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(v||0);
+const fmt = (v,d="—") => v||d;
+let poCounter = 10500;
+const genPO = () => `PT01-PO${String(++poCounter).padStart(9,"0")}`;
+
+const inp  = {background:C.surface,border:`1px solid ${C.border}`,color:C.text,padding:"9px 12px",borderRadius:6,fontFamily:"inherit",fontSize:13,outline:"none",width:"100%",boxSizing:"border-box"};
+const selS = {...inp,cursor:"pointer"};
+
+// ── TP Logo SVG — brand + eai seal (black on sidebar = white) ─────────────────
+const TPLogo = ({ inverse = false }) => {
+  const col = inverse ? "#FFFFFF" : "#1A1A18";
+  const colMuted = inverse ? "rgba(255,255,255,0.45)" : "rgba(26,26,24,0.4)";
+  return (
+    <svg viewBox="0 0 148 44" xmlns="http://www.w3.org/2000/svg" style={{width:148,height:44,display:"block"}}>
+      {/* TP Monogram — correct geometry per guidelines */}
+      {/* T: vertical bar + horizontal top */}
+      <rect x="2" y="4" width="14" height="3.5" fill={col}/>
+      <rect x="7.5" y="4" width="3.5" height="22" fill={col}/>
+      {/* P: vertical bar + D-shape */}
+      <rect x="20" y="4" width="3.5" height="22" fill={col}/>
+      <path d="M23.5 4 L30 4 Q37 4 37 11 Q37 18 30 18 L23.5 18 Z" fill={col}/>
+      {/* Arrow/notch top-left of T */}
+      <polygon points="2,4 6,4 2,8" fill={col}/>
+      {/* Vertical divider */}
+      <line x1="44" y1="6" x2="44" y2="38" stroke={colMuted} strokeWidth="0.8"/>
+      {/* eai mark */}
+      <text x="51" y="20" fontFamily="Georgia, 'Times New Roman', serif" fontSize="15" fontWeight="700" fill={col} letterSpacing="0.5">eai</text>
+      {/* Subtitle lines */}
+      <text x="51" y="30" fontFamily="'Helvetica Neue', Arial, sans-serif" fontSize="5.2" fill={colMuted} letterSpacing="0.2">Emotional and Artificial</text>
+      <text x="51" y="37" fontFamily="'Helvetica Neue', Arial, sans-serif" fontSize="5.2" fill={colMuted} letterSpacing="0.2">Intelligence</text>
     </svg>
-    <div class="app-name">
-      TP Room Management Hub
-      <span>Teleperformance Portugal</span>
-    </div>
-  </div>
-
-  <nav class="nav">
-    <div class="nav-section-label">Navegação</div>
-
-    <button class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-      Dashboard
-    </button>
-
-    <button class="nav-item" onclick="showPage('rooms')" id="nav-rooms">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-      Salas
-    </button>
-
-    <button class="nav-item" onclick="showPage('bookings')" id="nav-bookings">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Agendamentos
-    </button>
-
-    <button class="nav-item" onclick="showPage('calendar')" id="nav-calendar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
-      Calendário
-    </button>
-  </nav>
-
-  <div class="sync-area">
-    <div class="sync-dot" id="sync-dot"></div>
-    <span class="sync-text" id="sync-label">A ligar...</span>
-  </div>
-</aside>
-
-<!-- MAIN CONTENT -->
-<main class="main">
-
-  <!-- ── DASHBOARD ── -->
-  <section id="page-dashboard" class="page active">
-    <div class="page-header">
-      <div>
-        <div class="page-eyebrow">Visão Geral</div>
-        <h1 class="page-title">Dashboard</h1>
-      </div>
-      <div class="page-actions">
-        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ Exportar CSV</button>
-        <button class="btn btn-ghost btn-sm" onclick="exportExcel()">↓ Exportar Excel</button>
-      </div>
-    </div>
-
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">Total de Salas</div>
-        <div class="stat-value" id="stat-total-rooms">—</div>
-        <div class="stat-sub">registadas no sistema</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Em Curso Hoje</div>
-        <div class="stat-value" id="stat-active-bookings">—</div>
-        <div class="stat-sub">agendamentos ativos</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Próximos 30 Dias</div>
-        <div class="stat-value" id="stat-upcoming-bookings">—</div>
-        <div class="stat-sub">agendamentos futuros</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Capacidade Total</div>
-        <div class="stat-value" id="stat-total-seats">—</div>
-        <div class="stat-sub">postos disponíveis</div>
-      </div>
-    </div>
-
-    <div class="two-col">
-      <div class="card">
-        <div class="card-title">Ocupação por Sala — Próx. 30 dias</div>
-        <div class="occupancy-list" id="occupancy-list">
-          <div class="empty-state"><div class="empty-icon">▣</div><p>Sem salas criadas ainda</p></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Agendamentos Recentes</div>
-        <div id="recent-bookings" style="display:flex;flex-direction:column;gap:8px;">
-          <div class="empty-state"><div class="empty-icon">◈</div><p>Sem agendamentos</p></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── ROOMS ── -->
-  <section id="page-rooms" class="page">
-    <div class="page-header">
-      <div>
-        <div class="page-eyebrow">Gestão</div>
-        <h1 class="page-title">Salas</h1>
-      </div>
-      <button class="btn btn-primary" onclick="openRoomModal()">+ Nova Sala</button>
-    </div>
-    <div class="filters-row">
-      <input type="text" id="room-search" placeholder="Pesquisar sala ou local..." oninput="renderRooms()">
-      <select id="room-type-filter" onchange="renderRooms()">
-        <option value="">Todos os tipos</option>
-        <option value="Reunião">Reunião</option>
-        <option value="Formação">Formação</option>
-      </select>
-    </div>
-    <div class="rooms-grid" id="rooms-grid">
-      <div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">▣</div><p>A carregar salas...</p></div>
-    </div>
-  </section>
-
-  <!-- ── BOOKINGS ── -->
-  <section id="page-bookings" class="page">
-    <div class="page-header">
-      <div>
-        <div class="page-eyebrow">Gestão</div>
-        <h1 class="page-title">Agendamentos</h1>
-      </div>
-      <div class="page-actions">
-        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ CSV</button>
-        <button class="btn btn-ghost btn-sm" onclick="exportExcel()">↓ Excel</button>
-        <button class="btn btn-primary" onclick="openBookingModal()">+ Novo Agendamento</button>
-      </div>
-    </div>
-    <div class="filters-row">
-      <input type="text" id="booking-search" placeholder="Pesquisar projeto ou responsável..." oninput="renderBookings()">
-      <select id="booking-room-filter" onchange="renderBookings()"><option value="">Todas as salas</option></select>
-      <select id="booking-status-filter" onchange="renderBookings()">
-        <option value="">Todos os estados</option>
-        <option value="active">Em curso</option>
-        <option value="upcoming">Futuro</option>
-        <option value="past">Passado</option>
-      </select>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Projeto</th><th>Sala</th><th>Início</th><th>Fim</th>
-            <th>Pessoas</th><th>Estado</th><th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="bookings-table-body">
-          <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted2);">A carregar...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- ── CALENDAR ── -->
-  <section id="page-calendar" class="page">
-    <div class="page-header">
-      <div>
-        <div class="page-eyebrow">Vista</div>
-        <h1 class="page-title">Calendário</h1>
-      </div>
-      <button class="btn btn-primary" onclick="openBookingModal()">+ Novo Agendamento</button>
-    </div>
-    <div class="card">
-      <div class="cal-nav">
-        <button class="btn btn-ghost btn-sm" onclick="changeMonth(-1)">← Anterior</button>
-        <span class="cal-month" id="cal-month-label"></span>
-        <button class="btn btn-ghost btn-sm" onclick="changeMonth(1)">Próximo →</button>
-      </div>
-      <div class="cal-grid" id="calendar-grid">
-        <div class="cal-hdr">Seg</div><div class="cal-hdr">Ter</div><div class="cal-hdr">Qua</div>
-        <div class="cal-hdr">Qui</div><div class="cal-hdr">Sex</div>
-        <div class="cal-hdr">Sáb</div><div class="cal-hdr">Dom</div>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<!-- MODAL: SALA -->
-<div class="modal-overlay" id="room-modal">
-  <div class="modal">
-    <h2 class="modal-title" id="room-modal-title">Nova Sala</h2>
-    <input type="hidden" id="room-edit-id">
-    <div class="form-grid">
-      <div class="form-group"><label>Nome da Sala *</label><input type="text" id="room-name" placeholder="ex: Sala Lisboa"></div>
-      <div class="form-group"><label>Tipo *</label>
-        <select id="room-type"><option value="Reunião">Reunião</option><option value="Formação">Formação</option></select>
-      </div>
-      <div class="form-group full"><label>Local / Piso *</label><input type="text" id="room-location" placeholder="ex: Piso 3 — Edifício A"></div>
-      <div class="form-group"><label>Nº de Postos *</label><input type="number" id="room-seats" min="1" placeholder="12"></div>
-      <div class="form-group"><label>Equipamentos</label><input type="text" id="room-equipment" placeholder="ex: Projetor, TV, Webcam"></div>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="closeModal('room-modal')">Cancelar</button>
-      <button class="btn btn-primary" id="btn-save-room" onclick="saveRoom()">Guardar Sala</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: AGENDAMENTO -->
-<div class="modal-overlay" id="booking-modal">
-  <div class="modal">
-    <h2 class="modal-title" id="booking-modal-title">Novo Agendamento</h2>
-    <input type="hidden" id="booking-edit-id">
-    <div class="form-grid">
-      <div class="form-group full"><label>Projeto / Descrição *</label><input type="text" id="booking-project" placeholder="ex: Kickoff Q3 · Projeto Alfa"></div>
-      <div class="form-group full"><label>Sala *</label><select id="booking-room" onchange="checkConflicts()"></select></div>
-      <div class="form-group"><label>Data de Início *</label><input type="date" id="booking-start" onchange="checkConflicts()"></div>
-      <div class="form-group"><label>Data de Fim *</label><input type="date" id="booking-end" onchange="checkConflicts()"></div>
-      <div class="form-group"><label>Hora Início</label><input type="time" id="booking-time-start" value="09:00"></div>
-      <div class="form-group"><label>Hora Fim</label><input type="time" id="booking-time-end" value="18:00"></div>
-      <div class="form-group"><label>Nº de Pessoas *</label><input type="number" id="booking-people" min="1" placeholder="8"></div>
-      <div class="form-group"><label>Responsável</label><input type="text" id="booking-owner" placeholder="ex: Ana Silva"></div>
-      <div class="form-group full"><label>Notas</label><textarea id="booking-notes" placeholder="Informações adicionais..."></textarea></div>
-    </div>
-    <div class="conflict-box" id="conflict-box">
-      <div class="conflict-title">⚠ Conflito de Agendamento</div>
-      <div id="conflict-list"></div>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="closeModal('booking-modal')">Cancelar</button>
-      <button class="btn btn-primary" id="btn-save-booking" onclick="saveBooking()">Guardar Agendamento</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-// ── CONFIG ────────────────────────────────────────────
-const SUPABASE_URL = 'https://inkigcninxftoysavoah.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_MBzTerJgUTMVq9bTK0pDpQ_J1QzwCto';
-
-const HDR = {
-  'Content-Type': 'application/json',
-  'apikey': SUPABASE_KEY,
-  'Authorization': `Bearer ${SUPABASE_KEY}`,
-  'Prefer': 'return=representation'
-};
-
-// ── STATE ─────────────────────────────────────────────
-let rooms = [], bookings = [];
-const today = new Date(); today.setHours(0,0,0,0);
-let calYear = today.getFullYear(), calMonth = today.getMonth();
-
-// ── DB ────────────────────────────────────────────────
-const db = {
-  get: async (t, q='') => {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}?${q}&order=created_at.asc`, {headers:HDR});
-    if (!r.ok) throw new Error(await r.text());
-    return r.json();
-  },
-  insert: async (t, d) => {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}`, {method:'POST',headers:HDR,body:JSON.stringify(d)});
-    if (!r.ok) throw new Error(await r.text());
-    return r.json();
-  },
-  update: async (t, id, d) => {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}?id=eq.${id}`, {method:'PATCH',headers:HDR,body:JSON.stringify(d)});
-    if (!r.ok) throw new Error(await r.text());
-    return r.json();
-  },
-  del: async (t, id) => {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}?id=eq.${id}`, {method:'DELETE',headers:HDR});
-    if (!r.ok) throw new Error(await r.text());
-  }
-};
-
-// ── SYNC STATUS ───────────────────────────────────────
-function setSyncStatus(s, msg) {
-  document.getElementById('sync-dot').className = 'sync-dot ' + s;
-  document.getElementById('sync-label').textContent = msg;
-}
-
-// ── INIT ─────────────────────────────────────────────
-async function init() {
-  showLoading('A ligar à base de dados...');
-  try {
-    await loadAll();
-    setSyncStatus('synced', 'Sincronizado');
-    hideLoading();
-    renderAll();
-  } catch(e) {
-    hideLoading();
-    setSyncStatus('error', 'Erro de ligação');
-    toast('Erro ao ligar ao Supabase. Verifica a ligação.', true);
-    console.error(e);
-  }
-}
-
-async function loadAll() {
-  [rooms, bookings] = await Promise.all([
-    db.get('rh_rooms'),
-    db.get('rh_bookings', 'select=*')
-  ]);
-}
-
-function renderAll() {
-  renderRooms();
-  renderBookings();
-  renderDashboard();
-  updateBookingRoomFilter();
-  if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
-}
-
-// ── LOADING ───────────────────────────────────────────
-function showLoading(msg) {
-  document.getElementById('loading-msg').textContent = msg||'A processar...';
-  document.getElementById('loading-overlay').classList.add('show');
-}
-function hideLoading() { document.getElementById('loading-overlay').classList.remove('show'); }
-
-// ── NAVIGATION ────────────────────────────────────────
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  document.getElementById('nav-' + id).classList.add('active');
-  if (id === 'calendar') renderCalendar();
-}
-
-// ── TOAST ─────────────────────────────────────────────
-function toast(msg, isError=false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (isError ? ' error' : '');
-  t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 3200);
-}
-
-// ── MODALS ────────────────────────────────────────────
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(o => {
-  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
-});
-
-// ── ROOMS ─────────────────────────────────────────────
-function openRoomModal(id=null) {
-  document.getElementById('room-modal-title').textContent = id ? 'Editar Sala' : 'Nova Sala';
-  document.getElementById('room-edit-id').value = id||'';
-  if (id) {
-    const r = rooms.find(x => x.id===id);
-    document.getElementById('room-name').value = r.name;
-    document.getElementById('room-type').value = r.type;
-    document.getElementById('room-location').value = r.location;
-    document.getElementById('room-seats').value = r.seats;
-    document.getElementById('room-equipment').value = r.equipment||'';
-  } else {
-    ['room-name','room-location','room-equipment'].forEach(f => document.getElementById(f).value='');
-    document.getElementById('room-type').value = 'Reunião';
-    document.getElementById('room-seats').value = '';
-  }
-  document.getElementById('room-modal').classList.add('open');
-}
-
-async function saveRoom() {
-  const name = document.getElementById('room-name').value.trim();
-  const type = document.getElementById('room-type').value;
-  const location = document.getElementById('room-location').value.trim();
-  const seats = parseInt(document.getElementById('room-seats').value);
-  const equipment = document.getElementById('room-equipment').value.trim();
-  const editId = document.getElementById('room-edit-id').value;
-  if (!name || !location || !seats) { toast('Preenche todos os campos obrigatórios.', true); return; }
-  const btn = document.getElementById('btn-save-room');
-  btn.disabled = true; setSyncStatus('syncing', 'A guardar...');
-  try {
-    if (editId) { await db.update('rh_rooms', editId, {name,type,location,seats,equipment}); toast('Sala atualizada.'); }
-    else { await db.insert('rh_rooms', {name,type,location,seats,equipment}); toast('Sala criada com sucesso.'); }
-    await loadAll(); closeModal('room-modal'); renderAll(); setSyncStatus('synced', 'Sincronizado');
-  } catch(e) { toast('Erro ao guardar sala.', true); setSyncStatus('error','Erro'); console.error(e); }
-  finally { btn.disabled = false; }
-}
-
-async function deleteRoom(id) {
-  if (!confirm('Apagar esta sala? Os agendamentos associados serão também removidos.')) return;
-  setSyncStatus('syncing','A apagar...');
-  try { await db.del('rh_rooms', id); await loadAll(); renderAll(); toast('Sala removida.'); setSyncStatus('synced','Sincronizado'); }
-  catch(e) { toast('Erro ao apagar sala.', true); setSyncStatus('error','Erro'); }
-}
-
-function renderRooms() {
-  const q = (document.getElementById('room-search').value||'').toLowerCase();
-  const tf = document.getElementById('room-type-filter').value;
-  const grid = document.getElementById('rooms-grid');
-  const todayStr = today.toISOString().slice(0,10);
-  const filtered = rooms.filter(r =>
-    (!q || r.name.toLowerCase().includes(q) || r.location.toLowerCase().includes(q)) &&
-    (!tf || r.type===tf)
   );
-  if (!filtered.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">▣</div><p>${rooms.length?'Nenhuma sala encontrada.':'Ainda não há salas. Clica em "+ Nova Sala".'}</p></div>`;
-    return;
+};
+
+export default function App() {
+  const [pedidos,setPedidos]     = useState([]);
+  const [rubricas,setRubricas]   = useState([]);
+  const [loading,setLoading]     = useState(true);
+  const [saving,setSaving]       = useState(false);
+  const [view,setView]           = useState("dashboard");
+  const [showModal,setShowModal] = useState(false);
+  const [showRubricaModal,setShowRubricaModal] = useState(false);
+  const [editItem,setEditItem]   = useState(null);
+  const [editRubrica,setEditRubrica] = useState(null);
+  const [budgetTab,setBudgetTab] = useState("OPEX");
+  const [editingBudget,setEditingBudget] = useState(false);
+  const [budgetDraft,setBudgetDraft]     = useState({});
+  const [fText,setFText]   = useState("");
+  const [fCode,setFCode]   = useState("Todos");
+  const [fEdif,setFEdif]   = useState("Todos");
+  const [fStat,setFStat]   = useState("Todos");
+  const [fType,setFType]     = useState("Todos");
+  const [sortOrder,setSortOrder] = useState("recente");
+
+  const [rubricaForm,setRubricaForm] = useState({ code:"", descricao:"", categoria:"OPEX", planned_budget:0 });
+  const setRF = (k,v) => setRubricaForm(p=>({...p,[k]:v}));
+
+  const emptyForm = () => ({
+    purchase_requisition:"", name:"", preparer:NOMES[0], tipo:TIPOS_PEDIDO[0], edificio:EDIFICIOS[0],
+    status:"Open", fornecedor:"", budget_code: rubricas[0]?.code||"",
+    po:genPO(), created_date:new Date().toLocaleDateString("pt-PT",{day:"2-digit",month:"2-digit",year:"2-digit"}),
+    ref_orcamento:"", value:"", assignees:"", notas:"", d365_id:"",
+  });
+  const [form,setForm] = useState(emptyForm());
+  const setF = (k,v) => setForm(p=>({...p,[k]:v}));
+
+  const BUDGET_CODES  = rubricas.map(r => r.code);
+  const CODE_DESC     = Object.fromEntries(rubricas.map(r => [r.code, r.descricao]));
+  const CODE_TYPE     = Object.fromEntries(rubricas.map(r => [r.code, r.categoria]));
+  const budgets       = Object.fromEntries(rubricas.map(r => [r.code, r.planned_budget||0]));
+  const opexRubricas  = rubricas.filter(r => r.categoria === "OPEX");
+  const capexRubricas = rubricas.filter(r => r.categoria === "CAPEX");
+
+  useEffect(() => { loadAll(); }, []);
+
+  async function loadAll() {
+    setLoading(true);
+    const [{ data: ped }, { data: rub }] = await Promise.all([
+      supabase.from("pedidos").select("*").order("created_at", { ascending: false }),
+      supabase.from("budget_codes").select("*").order("categoria").order("code"),
+    ]);
+    if (ped) setPedidos(ped);
+    if (rub) setRubricas(rub);
+    setLoading(false);
   }
-  grid.innerHTML = filtered.map(r => {
-    const futureB = bookings.filter(b => b.room_id===r.id && b.end_date>=todayStr).length;
-    return `<div class="room-card">
-      <div class="room-card-header">
-        <div class="room-type-pill ${r.type==='Formação'?'pill-training':'pill-meeting'}">${r.type}</div>
-        <div class="room-name">${r.name}</div>
-        <div class="room-meta">📍 ${r.location}</div>
-        ${r.equipment?`<div class="room-meta" style="margin-top:3px">🔧 ${r.equipment}</div>`:''}
-      </div>
-      <div class="room-card-body">
-        <div>
-          <div class="room-seats">${r.seats}</div>
-          <div class="room-seats-label">postos</div>
+
+  async function savePedido() {
+    if (!form.name) return;
+    setSaving(true);
+    const payload = { ...form, value: parseFloat(form.value)||0 };
+    delete payload.id; delete payload.created_at;
+    if (editItem) await supabase.from("pedidos").update(payload).eq("id", editItem.id);
+    else await supabase.from("pedidos").insert([payload]);
+    await loadAll(); setSaving(false); setShowModal(false);
+  }
+
+  async function delPedido(id) {
+    if (!confirm("Eliminar este pedido?")) return;
+    await supabase.from("pedidos").delete().eq("id", id);
+    setPedidos(pr => pr.filter(p => p.id !== id));
+  }
+
+  async function saveBudgets() {
+    setSaving(true);
+    const upserts = Object.keys(budgetDraft).map(code => {
+      const r = rubricas.find(x => x.code === code);
+      return { code, descricao: r?.descricao||"", categoria: r?.categoria||"OPEX", planned_budget: parseFloat(budgetDraft[code])||0 };
+    });
+    if (upserts.length > 0) await supabase.from("budget_codes").upsert(upserts, { onConflict:"code" });
+    await loadAll(); setSaving(false); setEditingBudget(false); setBudgetDraft({});
+  }
+
+  function openNewRubrica() { setEditRubrica(null); setRubricaForm({ code:"", descricao:"", categoria:"OPEX", planned_budget:0 }); setShowRubricaModal(true); }
+  function openEditRubrica(r) { setEditRubrica(r); setRubricaForm({ code:r.code, descricao:r.descricao||"", categoria:r.categoria||"OPEX", planned_budget:r.planned_budget||0 }); setShowRubricaModal(true); }
+
+  async function saveRubrica() {
+    if (!rubricaForm.code || !rubricaForm.descricao) return;
+    setSaving(true);
+    const payload = { ...rubricaForm, planned_budget: parseFloat(rubricaForm.planned_budget)||0 };
+    if (editRubrica) await supabase.from("budget_codes").update(payload).eq("id", editRubrica.id);
+    else await supabase.from("budget_codes").insert([payload]);
+    await loadAll(); setSaving(false); setShowRubricaModal(false);
+  }
+
+  async function delRubrica(id, code) {
+    if (pedidos.some(p => p.budget_code === code)) { alert(`Não é possível eliminar — existem pedidos associados a ${code}.`); return; }
+    if (!confirm("Eliminar esta rubrica?")) return;
+    await supabase.from("budget_codes").delete().eq("id", id);
+    await loadAll();
+  }
+
+  const gastosPorCode = useMemo(() => {
+    const g = {}; BUDGET_CODES.forEach(c => g[c]=0);
+    pedidos.filter(p=>p.status!=="Rejected").forEach(p=>{ g[p.budget_code]=(g[p.budget_code]||0)+Number(p.value||0); });
+    return g;
+  }, [pedidos, rubricas]);
+
+  const gastosPorEdif = useMemo(() => {
+    const g = {}; EDIFICIOS.forEach(e => g[e]=0);
+    pedidos.filter(p=>p.status!=="Rejected").forEach(p=>{ g[p.edificio]=(g[p.edificio]||0)+Number(p.value||0); });
+    return g;
+  }, [pedidos]);
+
+  const opexBudget  = opexRubricas.reduce((s,r)=>s+(r.planned_budget||0),0);
+  const capexBudget = capexRubricas.reduce((s,r)=>s+(r.planned_budget||0),0);
+  const totalBudget = opexBudget+capexBudget;
+  const opexGasto   = opexRubricas.reduce((s,r)=>s+(gastosPorCode[r.code]||0),0);
+  const capexGasto  = capexRubricas.reduce((s,r)=>s+(gastosPorCode[r.code]||0),0);
+  const totalGasto  = opexGasto+capexGasto;
+
+  const filtered = useMemo(() => {
+    let result = pedidos.filter(p => {
+      if (fCode!=="Todos" && p.budget_code!==fCode) return false;
+      if (fEdif!=="Todos" && p.edificio!==fEdif)    return false;
+      if (fStat!=="Todos" && p.status!==fStat)      return false;
+      if (fType!=="Todos" && CODE_TYPE[p.budget_code]!==fType) return false;
+      if (fText && !p.name?.toLowerCase().includes(fText.toLowerCase()) &&
+                   !p.fornecedor?.toLowerCase().includes(fText.toLowerCase()) &&
+                   !p.po?.toLowerCase().includes(fText.toLowerCase()) &&
+                   !p.purchase_requisition?.toLowerCase().includes(fText.toLowerCase())) return false;
+      return true;
+    });
+    result.sort((a,b) => {
+      const da = new Date(a.created_at), db = new Date(b.created_at);
+      return sortOrder === "recente" ? db - da : da - db;
+    });
+    return result;
+  }, [pedidos,fCode,fEdif,fStat,fType,fText,rubricas,sortOrder]);
+
+  function openNew()   { setEditItem(null); setForm({...emptyForm(), budget_code: rubricas[0]?.code||""}); setShowModal(true); }
+  function openEdit(p) { setEditItem(p); setForm({...p, value:p.value?.toString()||"", d365_id:p.d365_id||"", purchase_requisition:p.purchase_requisition||""}); setShowModal(true); }
+  const pct = code => { const b=budgets[code]||0; if(b===0) return 0; return Math.min(((gastosPorCode[code]||0)/b)*100,100); };
+
+  const nav = [
+    {id:"dashboard", label:"Dashboard"},
+    {id:"pedidos",   label:"Pedidos"},
+    {id:"budget",    label:"Budget"},
+    {id:"rubricas",  label:"Rubricas"},
+    {id:"relatorios",label:"Relatórios"},
+  ];
+
+  // Shared components
+  const Lbl = ({children,sub}) => (
+    <div style={{fontSize:10,color:C.text3,fontWeight:500,letterSpacing:0.8,textTransform:"uppercase",marginBottom:sub?2:5}}>{children}</div>
+  );
+
+  const Bar = ({r}) => {
+    const code=r.code, p2=pct(code), critico=p2>85, disp=(budgets[code]||0)-(gastosPorCode[code]||0), type=r.categoria;
+    return (
+      <div style={{marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:5,gap:8,flexWrap:"wrap"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:9,padding:"2px 7px",borderRadius:3,background:TYPE_BG[type],color:TYPE_COLOR[type],fontWeight:600,letterSpacing:0.5}}>{type}</span>
+            <span style={{fontFamily:"'JetBrains Mono',monospace",color:C.text2,fontSize:11,fontWeight:500}}>{code}</span>
+          </div>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:critico?C.red:C.text3,whiteSpace:"nowrap"}}>
+            {formatEUR(gastosPorCode[code])} / {formatEUR(budgets[code])}
+            {budgets[code]>0&&<span style={{marginLeft:8,color:disp>=0?C.green:C.red}}>({formatEUR(disp)})</span>}
+          </span>
         </div>
-        <div class="room-bookings-pill">${futureB} agendamento${futureB!==1?'s':''}</div>
-      </div>
-      <div class="room-card-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openBookingModal(null,'${r.id}')">+ Agendar</button>
-        <button class="btn btn-outline btn-sm" onclick="openRoomModal('${r.id}')">Editar</button>
-        <button class="btn btn-danger-soft btn-sm" onclick="deleteRoom('${r.id}')">✕</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── CONFLICT ──────────────────────────────────────────
-function checkConflicts() {
-  const roomId = document.getElementById('booking-room').value;
-  const start  = document.getElementById('booking-start').value;
-  const end    = document.getElementById('booking-end').value;
-  const editId = document.getElementById('booking-edit-id').value;
-  const box    = document.getElementById('conflict-box');
-  const list   = document.getElementById('conflict-list');
-  if (!roomId||!start||!end) { box.classList.remove('show'); return; }
-  const conflicts = bookings.filter(b => b.room_id===roomId && b.id!==editId && b.start_date<=end && b.end_date>=start);
-  if (!conflicts.length) { box.classList.remove('show'); return; }
-  box.classList.add('show');
-  list.innerHTML = conflicts.map(b =>
-    `<div class="conflict-item">· <strong>${b.project}</strong> — ${formatDate(b.start_date)} → ${formatDate(b.end_date)} (${b.people} pessoas)</div>`
-  ).join('');
-}
-
-// ── BOOKINGS ──────────────────────────────────────────
-function openBookingModal(id=null, preRoomId=null) {
-  if (!rooms.length) { toast('Cria pelo menos uma sala primeiro.', true); return; }
-  document.getElementById('booking-modal-title').textContent = id ? 'Editar Agendamento' : 'Novo Agendamento';
-  document.getElementById('booking-edit-id').value = id||'';
-  document.getElementById('conflict-box').classList.remove('show');
-  const sel = document.getElementById('booking-room');
-  sel.innerHTML = rooms.map(r => `<option value="${r.id}">${r.name} — ${r.location}</option>`).join('');
-  const todayStr = today.toISOString().slice(0,10);
-  if (id) {
-    const b = bookings.find(x => x.id===id);
-    document.getElementById('booking-project').value = b.project;
-    sel.value = b.room_id;
-    document.getElementById('booking-start').value = b.start_date;
-    document.getElementById('booking-end').value = b.end_date;
-    document.getElementById('booking-time-start').value = b.time_start||'09:00';
-    document.getElementById('booking-time-end').value = b.time_end||'18:00';
-    document.getElementById('booking-people').value = b.people;
-    document.getElementById('booking-owner').value = b.owner||'';
-    document.getElementById('booking-notes').value = b.notes||'';
-  } else {
-    document.getElementById('booking-project').value = '';
-    if (preRoomId) sel.value = preRoomId;
-    document.getElementById('booking-start').value = todayStr;
-    document.getElementById('booking-end').value = todayStr;
-    document.getElementById('booking-time-start').value = '09:00';
-    document.getElementById('booking-time-end').value = '18:00';
-    document.getElementById('booking-people').value = '';
-    document.getElementById('booking-owner').value = '';
-    document.getElementById('booking-notes').value = '';
-  }
-  document.getElementById('booking-modal').classList.add('open');
-  setTimeout(checkConflicts, 100);
-}
-
-async function saveBooking() {
-  const project   = document.getElementById('booking-project').value.trim();
-  const room_id   = document.getElementById('booking-room').value;
-  const start_date= document.getElementById('booking-start').value;
-  const end_date  = document.getElementById('booking-end').value;
-  const time_start= document.getElementById('booking-time-start').value;
-  const time_end  = document.getElementById('booking-time-end').value;
-  const people    = parseInt(document.getElementById('booking-people').value);
-  const owner     = document.getElementById('booking-owner').value.trim();
-  const notes     = document.getElementById('booking-notes').value.trim();
-  const editId    = document.getElementById('booking-edit-id').value;
-
-  if (!project||!room_id||!start_date||!end_date||!people) { toast('Preenche todos os campos obrigatórios.', true); return; }
-  if (end_date < start_date) { toast('A data de fim não pode ser anterior à de início.', true); return; }
-
-  const room = rooms.find(r => r.id===room_id);
-  if (people > room.seats) { toast(`A sala "${room.name}" tem apenas ${room.seats} postos.`, true); return; }
-
-  const conflicts = bookings.filter(b => b.room_id===room_id && b.id!==editId && b.start_date<=end_date && b.end_date>=start_date);
-  if (conflicts.length && !confirm(`Existem ${conflicts.length} conflito(s) nesta sala. Confirmas mesmo assim?`)) return;
-
-  const btn = document.getElementById('btn-save-booking');
-  btn.disabled = true; setSyncStatus('syncing','A guardar...');
-  try {
-    const data = {project,room_id,start_date,end_date,time_start,time_end,people,owner,notes};
-    if (editId) { await db.update('rh_bookings',editId,data); toast('Agendamento atualizado.'); }
-    else { await db.insert('rh_bookings',data); toast('Agendamento criado com sucesso.'); }
-    await loadAll(); closeModal('booking-modal'); renderAll(); setSyncStatus('synced','Sincronizado');
-  } catch(e) { toast('Erro ao guardar agendamento.', true); setSyncStatus('error','Erro'); console.error(e); }
-  finally { btn.disabled = false; }
-}
-
-async function deleteBooking(id) {
-  if (!confirm('Apagar este agendamento?')) return;
-  setSyncStatus('syncing','A apagar...');
-  try { await db.del('rh_bookings',id); await loadAll(); renderAll(); toast('Agendamento removido.'); setSyncStatus('synced','Sincronizado'); }
-  catch(e) { toast('Erro ao apagar.', true); setSyncStatus('error','Erro'); }
-}
-
-function bStatus(b) {
-  const s = new Date(b.start_date); s.setHours(0,0,0,0);
-  const e = new Date(b.end_date);   e.setHours(23,59,59,999);
-  if (today>=s && today<=e) return 'active';
-  if (s>today) return 'upcoming';
-  return 'past';
-}
-
-function statusPill(s) {
-  const map = { active:'pill-active', upcoming:'pill-upcoming', past:'pill-past' };
-  const label = { active:'Em curso', upcoming:'Futuro', past:'Passado' };
-  return `<span class="status-pill ${map[s]}">${label[s]}</span>`;
-}
-
-function renderBookings() {
-  const q  = (document.getElementById('booking-search').value||'').toLowerCase();
-  const rf = document.getElementById('booking-room-filter').value;
-  const sf = document.getElementById('booking-status-filter').value;
-  const tbody = document.getElementById('bookings-table-body');
-  const filtered = bookings.filter(b => {
-    const s = bStatus(b);
-    return (!q || b.project.toLowerCase().includes(q) || (b.owner||'').toLowerCase().includes(q)) &&
-           (!rf || b.room_id===rf) && (!sf || s===sf);
-  }).sort((a,b) => b.start_date.localeCompare(a.start_date));
-
-  if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted2);font-weight:300;">Nenhum agendamento encontrado.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = filtered.map(b => {
-    const room = rooms.find(r => r.id===b.room_id);
-    const days = Math.round((new Date(b.end_date)-new Date(b.start_date))/86400000)+1;
-    return `<tr>
-      <td><strong style="font-weight:600;">${b.project}</strong>${b.owner?`<br><span style="font-size:11px;color:var(--muted2);">${b.owner}</span>`:''}</td>
-      <td>${room?room.name:'—'}<br><span style="font-size:11px;color:var(--muted2);">${room?room.location:''}</span></td>
-      <td>${formatDate(b.start_date)}<br><span style="font-size:11px;color:var(--muted2);">${b.time_start}</span></td>
-      <td>${formatDate(b.end_date)}<br><span style="font-size:11px;color:var(--muted2);">${b.time_end} · ${days}d</span></td>
-      <td>${b.people} pessoas</td>
-      <td>${statusPill(bStatus(b))}</td>
-      <td style="display:flex;gap:6px;">
-        <button class="btn btn-ghost btn-sm" onclick="openBookingModal('${b.id}')">Editar</button>
-        <button class="btn btn-danger-soft btn-sm" onclick="deleteBooking('${b.id}')">✕</button>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-function updateBookingRoomFilter() {
-  const sel = document.getElementById('booking-room-filter');
-  const val = sel.value;
-  sel.innerHTML = `<option value="">Todas as salas</option>` + rooms.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
-  if (val) sel.value = val;
-}
-
-// ── DASHBOARD ─────────────────────────────────────────
-function renderDashboard() {
-  document.getElementById('stat-total-rooms').textContent = rooms.length;
-  const todayStr = today.toISOString().slice(0,10);
-  const in30 = new Date(); in30.setDate(in30.getDate()+30);
-  const in30Str = in30.toISOString().slice(0,10);
-  document.getElementById('stat-active-bookings').textContent = bookings.filter(b=>bStatus(b)==='active').length;
-  document.getElementById('stat-upcoming-bookings').textContent = bookings.filter(b=>bStatus(b)==='upcoming'&&b.start_date<=in30Str).length;
-  document.getElementById('stat-total-seats').textContent = rooms.reduce((s,r)=>s+r.seats,0);
-
-  const ol = document.getElementById('occupancy-list');
-  if (!rooms.length) {
-    ol.innerHTML = `<div class="empty-state"><div class="empty-icon">▣</div><p>Sem salas criadas ainda</p></div>`;
-  } else {
-    ol.innerHTML = rooms.map(r => {
-      const rB = bookings.filter(b=>b.room_id===r.id && b.end_date>=todayStr && b.start_date<=in30Str);
-      let days = 0;
-      rB.forEach(b => {
-        const s = new Date(Math.max(new Date(b.start_date),today));
-        const e = new Date(Math.min(new Date(b.end_date),in30));
-        days += Math.max(0, Math.round((e-s)/86400000)+1);
-      });
-      const pct = Math.min(100, Math.round((days/30)*100));
-      const cls = pct>=80?'bar-high':pct>=40?'bar-medium':'bar-low';
-      return `<div class="occupancy-item">
-        <div class="occupancy-name">${r.name}<div class="occupancy-loc">${r.location}</div></div>
-        <div class="occupancy-bar-wrap"><div class="occupancy-bar ${cls}" style="width:${pct}%"></div></div>
-        <div class="occupancy-pct">${pct}%</div>
-      </div>`;
-    }).join('');
-  }
-
-  const rb = document.getElementById('recent-bookings');
-  const recent = [...bookings].sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,5);
-  if (!recent.length) {
-    rb.innerHTML = `<div class="empty-state"><div class="empty-icon">◈</div><p>Sem agendamentos</p></div>`;
-  } else {
-    rb.innerHTML = recent.map(b => {
-      const room = rooms.find(r=>r.id===b.room_id);
-      return `<div class="recent-item">
-        <div>
-          <div class="recent-project">${b.project}</div>
-          <div class="recent-meta">${room?room.name:'—'} · ${formatDate(b.start_date)}${b.start_date!==b.end_date?' → '+formatDate(b.end_date):''}</div>
+        <div style={{background:C.surface2,borderRadius:2,height:4,overflow:"hidden"}}>
+          <div style={{height:"100%",width:`${p2}%`,background:critico?C.red:TYPE_COLOR[type],borderRadius:2,transition:"width .4s",opacity:0.85}}/>
         </div>
-        ${statusPill(bStatus(b))}
-      </div>`;
-    }).join('');
-  }
-}
+      </div>
+    );
+  };
 
-// ── CALENDAR ──────────────────────────────────────────
-function renderCalendar() {
-  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  document.getElementById('cal-month-label').textContent = `${months[calMonth]} ${calYear}`;
-  const firstDay = new Date(calYear, calMonth, 1);
-  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-  const startOffset = (firstDay.getDay()+6)%7;
-  const todayStr = today.toISOString().slice(0,10);
-  const grid = document.getElementById('calendar-grid');
-  const headers = Array.from(grid.querySelectorAll('.cal-hdr'));
-  grid.innerHTML = '';
-  headers.forEach(h => grid.appendChild(h));
-  for (let i=0; i<startOffset; i++) { const d=document.createElement('div'); d.className='cal-day empty'; grid.appendChild(d); }
-  for (let d=1; d<=daysInMonth; d++) {
-    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = dateStr===todayStr;
-    const dayB = bookings.filter(b=>b.start_date<=dateStr && b.end_date>=dateStr);
-    const div = document.createElement('div');
-    div.className = 'cal-day'+(isToday?' today':'');
-    div.innerHTML = `<div class="cal-day-num">${d}</div>` +
-      dayB.slice(0,3).map(b=>{
-        const room = rooms.find(r=>r.id===b.room_id);
-        return `<div class="cal-event" title="${b.project} — ${room?room.name:''}">${b.project}</div>`;
-      }).join('') +
-      (dayB.length>3?`<div style="font-size:9px;color:var(--muted2);padding:1px 4px;">+${dayB.length-3}</div>`:'');
-    grid.appendChild(div);
-  }
-}
+  const btnPrimary   = {background:C.sidebar,border:"none",color:"#FFFFFF",padding:"10px 20px",borderRadius:4,fontFamily:"inherit",fontSize:13,fontWeight:500,cursor:"pointer",letterSpacing:0.3};
+  const btnSecondary = {background:"transparent",border:`1px solid ${C.border2}`,color:C.text2,padding:"10px 18px",borderRadius:4,fontFamily:"inherit",fontSize:13,cursor:"pointer"};
+  const btnSmall     = {background:C.surface2,border:`1px solid ${C.border}`,color:C.text2,padding:"5px 10px",borderRadius:4,cursor:"pointer",fontSize:11,fontFamily:"inherit"};
+  const btnDanger    = {background:"transparent",border:"none",color:C.red,padding:"5px 8px",borderRadius:4,cursor:"pointer",fontSize:11};
 
-function changeMonth(dir) {
-  calMonth+=dir;
-  if (calMonth>11){calMonth=0;calYear++;}
-  if (calMonth<0){calMonth=11;calYear--;}
-  renderCalendar();
-}
+  return (
+    <div style={{fontFamily:"'Inter','Helvetica Neue',Arial,sans-serif",background:C.bg,minHeight:"100vh",color:C.text}}>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+      <style>{`
+        * { box-sizing: border-box; }
+        select option { background: #fff; color: #1a1a18; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .nav-btn:hover { background: rgba(255,255,255,0.08) !important; }
+      `}</style>
+      <div style={{display:"flex",minHeight:"100vh"}}>
 
-// ── EXPORT ────────────────────────────────────────────
-function exportCSV() {
-  if (!bookings.length) { toast('Sem agendamentos para exportar.', true); return; }
-  const stateMap = {active:'Em curso',upcoming:'Futuro',past:'Passado'};
-  const rows = [['Projeto','Responsável','Sala','Local','Tipo','Data Início','Data Fim','Hora Início','Hora Fim','Nº Pessoas','Capacidade','Notas','Estado']];
-  bookings.forEach(b => {
-    const room = rooms.find(r=>r.id===b.room_id);
-    rows.push([b.project,b.owner||'',room?.name||'',room?.location||'',room?.type||'',b.start_date,b.end_date,b.time_start,b.time_end,b.people,room?.seats||'',b.notes||'',stateMap[bStatus(b)]]);
-  });
-  const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  dlFile('TP_RoomHub_Agendamentos.csv','text/csv;charset=utf-8;','\uFEFF'+csv);
-  toast('CSV exportado com sucesso.');
-}
+        {/* SIDEBAR — TP Dark Slate */}
+        <aside style={{width:232,background:C.sidebar,display:"flex",flexDirection:"column",position:"fixed",top:0,left:0,height:"100vh",zIndex:100}}>
+          {/* Logo */}
+          <div style={{padding:"28px 24px 32px"}}>
+            <TPLogo inverse={true}/>
+          </div>
 
-function exportExcel() {
-  if (!bookings.length) { toast('Sem agendamentos para exportar.', true); return; }
-  const stateMap = {active:'Em curso',upcoming:'Futuro',past:'Passado'};
-  const rows = bookings.map(b => {
-    const room = rooms.find(r=>r.id===b.room_id);
-    return {'Projeto':b.project,'Responsável':b.owner||'','Sala':room?.name||'','Local':room?.location||'','Tipo':room?.type||'','Data Início':b.start_date,'Data Fim':b.end_date,'Hora Início':b.time_start,'Hora Fim':b.time_end,'Nº Pessoas':b.people,'Capacidade':room?.seats||'','Notas':b.notes||'','Estado':stateMap[bStatus(b)]};
-  });
-  const cols = Object.keys(rows[0]);
-  let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table border="1">`;
-  html += '<tr>'+cols.map(c=>`<th style="background:#4B4C6A;color:#fff;font-weight:bold;padding:8px;font-family:Arial;font-size:11px;">${c}</th>`).join('')+'</tr>';
-  rows.forEach((r,i) => {
-    html += '<tr>'+cols.map(c=>`<td style="padding:6px;background:${i%2===0?'#ffffff':'#f5f3f1'};font-family:Arial;font-size:11px;">${r[c]}</td>`).join('')+'</tr>';
-  });
-  html += '</table></body></html>';
-  dlFile('TP_RoomHub_Agendamentos.xls','application/vnd.ms-excel',html);
-  toast('Excel exportado com sucesso.');
-}
+          {/* Nav */}
+          <nav style={{flex:1,padding:"0 12px"}}>
+            {nav.map(n=>(
+              <button key={n.id} className="nav-btn" onClick={()=>setView(n.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",width:"100%",background:view===n.id?"rgba(255,255,255,0.1)":"transparent",border:"none",borderLeft:view===n.id?`2px solid ${C.sideAccent}`:"2px solid transparent",color:view===n.id?C.sideActive:C.sideText,cursor:"pointer",fontSize:13,fontWeight:view===n.id?500:400,textAlign:"left",fontFamily:"inherit",borderRadius:"0 4px 4px 0",transition:"all 0.15s",marginBottom:2,letterSpacing:0.2}}>
+                {n.label}
+              </button>
+            ))}
+          </nav>
 
-function dlFile(name, mime, content) {
-  const blob = new Blob([content],{type:mime});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=name; a.click();
-  URL.revokeObjectURL(url);
-}
+          {/* Footer */}
+          <div style={{padding:"20px 24px",borderTop:"1px solid rgba(255,255,255,0.08)"}}>
+            <div style={{fontSize:10,color:"rgba(255,255,255,0.25)",marginBottom:10,letterSpacing:0.5,textTransform:"uppercase"}}>Equipa</div>
+            {EQUIPA.map(p=>(
+              <div key={p.email} style={{fontSize:11,color:C.sideText,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:22,height:22,borderRadius:"50%",background:"rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:600,color:C.sideActive,flexShrink:0,letterSpacing:0.5}}>
+                  {p.nome.split(" ").map(n=>n[0]).join("").slice(0,2)}
+                </div>
+                <span>{p.nome.split(" ")[0]} {p.nome.split(" ").slice(-1)[0]}</span>
+              </div>
+            ))}
+            <div style={{marginTop:12,fontSize:10,color:"rgba(255,255,255,0.2)",letterSpacing:0.3}}>
+              {pedidos.length} pedidos · {pedidos.filter(p=>p.status==="Open").length} abertos
+            </div>
+          </div>
+        </aside>
 
-// ── HELPERS ───────────────────────────────────────────
-function formatDate(str) {
-  if (!str) return '';
-  const [y,m,d] = str.split('-');
-  return `${d}/${m}/${y}`;
-}
+        <main style={{marginLeft:232,flex:1,padding:"40px 48px",minHeight:"100vh"}}>
+          {loading&&(
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"60vh",flexDirection:"column",gap:16}}>
+              <div style={{width:32,height:32,border:`2px solid ${C.border}`,borderTop:`2px solid ${C.sidebar}`,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>
+              <div style={{fontSize:12,color:C.text3,letterSpacing:0.5}}>A carregar dados...</div>
+            </div>
+          )}
 
-// ── START ─────────────────────────────────────────────
-init();
-</script>
-</body>
-</html>
+          {/* ── DASHBOARD ────────────────────────────────────────────────── */}
+          {!loading&&view==="dashboard"&&(<>
+            <div style={{marginBottom:36}}>
+              <div style={{fontSize:11,color:C.text3,letterSpacing:2,textTransform:"uppercase",marginBottom:8,fontWeight:500}}>Purchase Requests</div>
+              <div style={{fontSize:26,fontWeight:300,color:C.text,letterSpacing:-0.5}}>Dashboard</div>
+            </div>
+
+            {/* KPI strip */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:1,marginBottom:32,background:C.border,borderRadius:6,overflow:"hidden"}}>
+              {[
+                {label:"Budget Total",  value:formatEUR(totalBudget),            sub:"OPEX + CAPEX"},
+                {label:"Total Gasto",   value:formatEUR(totalGasto),             sub:totalBudget>0?`${((totalGasto/totalBudget)*100).toFixed(1)}% consumido`:"—"},
+                {label:"Disponível",    value:formatEUR(totalBudget-totalGasto), sub:"remanescente"},
+                {label:"Pedidos Open",  value:pedidos.filter(p=>p.status==="Open").length, sub:`${pedidos.length} total`},
+              ].map((k,i)=>(
+                <div key={i} style={{background:C.surface,padding:"20px 24px"}}>
+                  <div style={{fontSize:10,color:C.text3,fontWeight:500,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{k.label}</div>
+                  <div style={{fontSize:24,fontWeight:300,color:C.text2,marginBottom:4,fontFamily:"'JetBrains Mono',monospace",letterSpacing:-0.5}}>{k.value}</div>
+                  <div style={{fontSize:11,color:C.text3}}>{k.sub}</div>
+                  {/* TP Pink micro-detail per brand guidelines */}
+                  <div style={{width:24,height:2,background:C.pink,marginTop:12,borderRadius:1}}/>
+                </div>
+              ))}
+            </div>
+
+            {/* OPEX / CAPEX */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}>
+              {[{label:"OPEX",gasto:opexGasto,budget:opexBudget,color:C.opex,bg:C.opexLight,count:opexRubricas.length},{label:"CAPEX",gasto:capexGasto,budget:capexBudget,color:C.capex,bg:C.capexLight,count:capexRubricas.length}].map(g=>{
+                const p2=g.budget>0?Math.min((g.gasto/g.budget)*100,100):0;
+                return(
+                  <div key={g.label} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:24}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
+                      <div>
+                        <div style={{fontSize:10,letterSpacing:2,textTransform:"uppercase",color:C.text3,marginBottom:4,fontWeight:500}}>{g.label}</div>
+                        <div style={{fontSize:22,fontWeight:300,color:g.color}}>{formatEUR(g.budget)}</div>
+                      </div>
+                      <div style={{fontSize:10,color:C.text3,background:g.bg,padding:"4px 10px",borderRadius:20,fontWeight:500}}>{g.count} rubricas</div>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+                      {[{l:"Gasto",v:formatEUR(g.gasto),c:C.text2},{l:"Disponível",v:formatEUR(g.budget-g.gasto),c:g.budget-g.gasto>=0?C.green:C.red}].map(s=>(
+                        <div key={s.l} style={{background:C.bg,borderRadius:4,padding:"10px 12px"}}>
+                          <div style={{fontSize:9,color:C.text3,marginBottom:4,textTransform:"uppercase",letterSpacing:0.8}}>{s.l}</div>
+                          <div style={{fontSize:14,fontWeight:400,color:s.c,fontFamily:"'JetBrains Mono',monospace"}}>{s.v}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{background:C.bg,borderRadius:2,height:3,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${p2}%`,background:p2>85?C.red:g.color,borderRadius:2,opacity:0.7}}/>
+                    </div>
+                    <div style={{fontSize:10,color:C.text3,marginTop:6,textAlign:"right"}}>{p2.toFixed(1)}%</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Rubricas */}
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:28,marginBottom:20}}>
+              <div style={{fontSize:10,color:C.text3,fontWeight:500,letterSpacing:1,textTransform:"uppercase",marginBottom:20}}>Consumo por Rubrica</div>
+              {rubricas.map(r=><Bar key={r.code} r={r}/>)}
+            </div>
+
+            {/* Recent */}
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:28}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                <div style={{fontSize:10,color:C.text3,fontWeight:500,letterSpacing:1,textTransform:"uppercase"}}>Pedidos Recentes</div>
+                <button onClick={()=>setView("pedidos")} style={{fontSize:11,color:C.opex,background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:500,letterSpacing:0.3}}>Ver todos →</button>
+              </div>
+              {[...pedidos].slice(0,6).map(p=>{
+                const sc=STATUS_COLORS[p.status]||STATUS_COLORS["Open"];
+                return(
+                  <div key={p.id} style={{display:"flex",alignItems:"center",gap:16,padding:"12px 0",borderBottom:`1px solid ${C.border}`}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",color:C.text,marginBottom:2}}>{p.name}</div>
+                      <div style={{fontSize:10,color:C.text3}}>{p.fornecedor||"—"} · <span style={{fontFamily:"'JetBrains Mono',monospace"}}>{p.budget_code}</span>{p.purchase_requisition&&<span style={{marginLeft:8}}>PR {p.purchase_requisition}</span>}</div>
+                    </div>
+                    <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:C.text2,minWidth:90,textAlign:"right",fontWeight:500}}>{formatEUR(p.value)}</div>
+                    <span style={{fontSize:10,padding:"3px 10px",borderRadius:20,background:sc.badge,color:sc.text,minWidth:76,textAlign:"center",fontWeight:500}}>{p.status}</span>
+                    <button onClick={()=>openEdit(p)} style={btnSmall}>Editar</button>
+                  </div>
+                );
+              })}
+              {pedidos.length===0&&<div style={{textAlign:"center",color:C.text3,fontSize:13,padding:32}}>Sem pedidos ainda.</div>}
+            </div>
+          </>)}
+
+          {/* ── PEDIDOS ──────────────────────────────────────────────────── */}
+          {!loading&&view==="pedidos"&&(<>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:32}}>
+              <div>
+                <div style={{fontSize:11,color:C.text3,letterSpacing:2,textTransform:"uppercase",marginBottom:8,fontWeight:500}}>Purchase Requests</div>
+                <div style={{fontSize:26,fontWeight:300,letterSpacing:-0.5}}>{filtered.length} resultado{filtered.length!==1?"s":""}</div>
+              </div>
+              <button onClick={openNew} style={btnPrimary}>+ Novo Pedido</button>
+            </div>
+            <div style={{display:"flex",gap:10,marginBottom:20,flexWrap:"wrap"}}>
+              <input value={fText} onChange={e=>setFText(e.target.value)} placeholder="Pesquisar nome, fornecedor, PO, PR…" style={{...inp,width:260,background:C.surface}}/>
+              <select value={sortOrder} onChange={e=>setSortOrder(e.target.value)} style={{...selS,width:"auto",background:C.surface}}>
+                <option value="recente">Mais recente</option>
+                <option value="antigo">Mais antigo</option>
+              </select>
+              {[{v:fType,s:setFType,opts:["Todos","OPEX","CAPEX"]},{v:fCode,s:setFCode,opts:["Todos",...BUDGET_CODES]},{v:fEdif,s:setFEdif,opts:["Todos",...EDIFICIOS]},{v:fStat,s:setFStat,opts:["Todos",...STATUS_OPTS]}].map((f,i)=>(
+                <select key={i} value={f.v} onChange={e=>f.s(e.target.value)} style={{...selS,width:"auto",background:C.surface}}>{f.opts.map(o=><option key={o}>{o}</option>)}</select>
+              ))}
+            </div>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",minWidth:1280}}>
+                <thead>
+                  <tr style={{borderBottom:`1px solid ${C.border}`}}>
+                    {["PR","Name","Preparer","Tipo","Edifício","Status","Fornecedor","Budget Code","Cat.","PO","Data","Valor","Assignee(s)",""].map((h,i)=>(
+                      <th key={i} style={{padding:"10px 14px",textAlign:"left",fontSize:9,fontWeight:600,letterSpacing:1.2,textTransform:"uppercase",color:C.text3,whiteSpace:"nowrap",background:C.bg}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((p,i)=>{
+                    const sc=STATUS_COLORS[p.status]||STATUS_COLORS["Open"];
+                    const type=CODE_TYPE[p.budget_code];
+                    return(
+                      <tr key={p.id} style={{borderBottom:`1px solid ${C.border}`,background:i%2===0?C.surface:"#FAFAF8"}}>
+                        <td style={{padding:"11px 14px",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:C.text3,whiteSpace:"nowrap"}}>{fmt(p.purchase_requisition)}</td>
+                        <td style={{padding:"11px 14px",maxWidth:220}}><div style={{fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:C.text}} title={p.name}>{p.name}</div></td>
+                        <td style={{padding:"11px 14px",fontSize:11,color:C.text3,whiteSpace:"nowrap"}}>{fmt(p.preparer)}</td>
+                        <td style={{padding:"11px 14px",fontSize:11,color:C.text3,whiteSpace:"nowrap",maxWidth:120}}><div style={{overflow:"hidden",textOverflow:"ellipsis"}}>{fmt(p.tipo)}</div></td>
+                        <td style={{padding:"11px 14px",fontSize:11,color:C.text3,whiteSpace:"nowrap"}}>{fmt(p.edificio)}</td>
+                        <td style={{padding:"11px 14px"}}>
+                          <span style={{background:sc.badge,color:sc.text,padding:"3px 10px",borderRadius:20,fontSize:10,fontWeight:500,display:"inline-flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>
+                            <span style={{width:4,height:4,borderRadius:"50%",background:sc.dot,display:"inline-block"}}/>{p.status}
+                          </span>
+                        </td>
+                        <td style={{padding:"11px 14px",fontSize:11,color:C.text3,whiteSpace:"nowrap",maxWidth:140}}><div style={{overflow:"hidden",textOverflow:"ellipsis"}}>{fmt(p.fornecedor)}</div></td>
+                        <td style={{padding:"11px 14px"}}>
+                          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:C.text2,fontWeight:500,whiteSpace:"nowrap"}}>{p.budget_code}</div>
+                          <div style={{fontSize:9,color:C.text3,marginTop:1,whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}}>{CODE_DESC[p.budget_code]||""}</div>
+                        </td>
+                        <td style={{padding:"11px 14px"}}>
+                          {type&&<span style={{fontSize:9,padding:"2px 7px",borderRadius:3,background:TYPE_BG[type],color:TYPE_COLOR[type],fontWeight:600,letterSpacing:0.5}}>{type}</span>}
+                        </td>
+                        <td style={{padding:"11px 14px",fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:C.text3,whiteSpace:"nowrap"}}>{fmt(p.po)}</td>
+                        <td style={{padding:"11px 14px",fontSize:10,color:C.text3,whiteSpace:"nowrap"}}>{fmt(p.created_date)}</td>
+                        <td style={{padding:"11px 14px",fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:C.text2,fontWeight:500,whiteSpace:"nowrap"}}>{formatEUR(p.value)}</td>
+                        <td style={{padding:"11px 14px",fontSize:11,color:C.text3,whiteSpace:"nowrap"}}>{fmt(p.assignees)}</td>
+                        <td style={{padding:"11px 14px"}}>
+                          <div style={{display:"flex",gap:4}}>
+                            <button onClick={()=>openEdit(p)} style={btnSmall}>Editar</button>
+                            <button onClick={()=>delPedido(p.id)} style={btnDanger}>✕</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filtered.length===0&&<tr><td colSpan={14} style={{padding:48,textAlign:"center",color:C.text3,fontSize:13}}>Nenhum pedido encontrado</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </>)}
+
+          {/* ── BUDGET ───────────────────────────────────────────────────── */}
+          {!loading&&view==="budget"&&(<>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:32}}>
+              <div>
+                <div style={{fontSize:11,color:C.text3,letterSpacing:2,textTransform:"uppercase",marginBottom:8,fontWeight:500}}>Planeamento</div>
+                <div style={{fontSize:26,fontWeight:300,letterSpacing:-0.5}}>Gestão de Budget</div>
+              </div>
+              {!editingBudget
+                ?<button onClick={()=>{setEditingBudget(true);setBudgetDraft({});}} style={btnPrimary}>Editar Budgets</button>
+                :<div style={{display:"flex",gap:10}}>
+                  <button onClick={()=>{setEditingBudget(false);setBudgetDraft({});}} style={btnSecondary}>Cancelar</button>
+                  <button onClick={saveBudgets} disabled={saving} style={{...btnPrimary,opacity:saving?0.6:1}}>{saving?"A guardar...":"Guardar"}</button>
+                </div>
+              }
+            </div>
+            <div style={{display:"flex",gap:2,marginBottom:24,background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:2,width:"fit-content"}}>
+              {["OPEX","CAPEX"].map(t=>(
+                <button key={t} onClick={()=>setBudgetTab(t)} style={{padding:"8px 20px",borderRadius:3,border:"none",background:budgetTab===t?C.sidebar:"transparent",color:budgetTab===t?"#fff":C.text3,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:budgetTab===t?500:400,letterSpacing:0.5,transition:"all 0.15s"}}>{t}</button>
+              ))}
+            </div>
+            {(()=>{
+              const rubs=budgetTab==="OPEX"?opexRubricas:capexRubricas;
+              const bud=rubs.reduce((s,r)=>s+(r.planned_budget||0),0);
+              const gas=rubs.reduce((s,r)=>s+(gastosPorCode[r.code]||0),0);
+              return(
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,marginBottom:24,background:C.border,borderRadius:6,overflow:"hidden"}}>
+                  {[{l:"Planned",v:formatEUR(bud),c:TYPE_COLOR[budgetTab]},{l:"Gasto",v:formatEUR(gas),c:C.text2},{l:"Disponível",v:formatEUR(bud-gas),c:bud-gas>=0?C.green:C.red}].map(s=>(
+                    <div key={s.l} style={{background:C.surface,padding:"18px 24px"}}>
+                      <div style={{fontSize:9,color:C.text3,marginBottom:8,textTransform:"uppercase",letterSpacing:1,fontWeight:500}}>{s.l}</div>
+                      <div style={{fontSize:20,fontWeight:300,color:s.c,fontFamily:"'JetBrains Mono',monospace"}}>{s.v}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12}}>
+              {(budgetTab==="OPEX"?opexRubricas:capexRubricas).map(r=>{
+                const g=gastosPorCode[r.code]||0,b=r.planned_budget||0,disp=b-g,p2=pct(r.code),critico=p2>85;
+                return(
+                  <div key={r.code} style={{background:C.surface,border:`1px solid ${critico?"#D4A0A0":C.border}`,borderRadius:6,padding:22}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+                      <div>
+                        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:TYPE_COLOR[budgetTab],fontWeight:500,marginBottom:3,letterSpacing:0.3}}>{r.code}</div>
+                        <div style={{fontSize:11,color:C.text3,maxWidth:260,lineHeight:1.4}}>{r.descricao}</div>
+                      </div>
+                      {critico&&<span style={{fontSize:9,background:C.redLight,color:C.red,padding:"2px 8px",borderRadius:3,fontWeight:600,letterSpacing:0.5,whiteSpace:"nowrap",marginLeft:8}}>ATENÇÃO</span>}
+                    </div>
+                    {editingBudget?(
+                      <div style={{marginBottom:14}}>
+                        <Lbl>Budget Planned (€)</Lbl>
+                        <input type="number" value={budgetDraft[r.code]!==undefined?budgetDraft[r.code]:b}
+                          onChange={e=>setBudgetDraft(pr=>({...pr,[r.code]:e.target.value}))}
+                          style={{...inp,fontFamily:"'JetBrains Mono',monospace"}}/>
+                      </div>
+                    ):(
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
+                        {[{l:"Planned",v:formatEUR(b),col:TYPE_COLOR[budgetTab]},{l:"Gasto",v:formatEUR(g),col:C.text2},{l:"Disponível",v:formatEUR(disp),col:disp>=0?C.green:C.red}].map(s=>(
+                          <div key={s.l} style={{background:C.bg,borderRadius:4,padding:"9px 12px"}}>
+                            <div style={{fontSize:9,color:C.text3,marginBottom:4,textTransform:"uppercase",letterSpacing:0.8}}>{s.l}</div>
+                            <div style={{fontSize:12,fontWeight:400,color:s.col,fontFamily:"'JetBrains Mono',monospace"}}>{s.v}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{background:C.bg,borderRadius:2,height:3,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${p2}%`,background:critico?C.red:TYPE_COLOR[budgetTab],borderRadius:2,opacity:0.7}}/>
+                    </div>
+                    <div style={{fontSize:9,color:C.text3,marginTop:5,textAlign:"right",letterSpacing:0.3}}>{p2.toFixed(1)}% utilizado</div>
+                  </div>
+                );
+              })}
+            </div>
+          </>)}
+
+          {/* ── RUBRICAS ─────────────────────────────────────────────────── */}
+          {!loading&&view==="rubricas"&&(<>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:32}}>
+              <div>
+                <div style={{fontSize:11,color:C.text3,letterSpacing:2,textTransform:"uppercase",marginBottom:8,fontWeight:500}}>Configuração</div>
+                <div style={{fontSize:26,fontWeight:300,letterSpacing:-0.5}}>Gestão de Rubricas</div>
+              </div>
+              <button onClick={openNewRubrica} style={btnPrimary}>+ Nova Rubrica</button>
+            </div>
+            {["OPEX","CAPEX"].map(cat=>(
+              <div key={cat} style={{marginBottom:32}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+                  <span style={{fontSize:9,padding:"3px 8px",borderRadius:3,background:TYPE_BG[cat],color:TYPE_COLOR[cat],fontWeight:600,letterSpacing:1}}>{cat}</span>
+                  <span style={{fontSize:12,color:C.text3}}>{cat==="OPEX"?opexRubricas.length:capexRubricas.length} rubricas</span>
+                </div>
+                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,overflow:"hidden"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse"}}>
+                    <thead>
+                      <tr style={{background:C.bg,borderBottom:`1px solid ${C.border}`}}>
+                        {["Código","Descrição","Budget Planned","Gasto","Disponível",""].map((h,i)=>(
+                          <th key={i} style={{padding:"10px 16px",textAlign:"left",fontSize:9,fontWeight:600,letterSpacing:1.2,textTransform:"uppercase",color:C.text3}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(cat==="OPEX"?opexRubricas:capexRubricas).map((r,i)=>{
+                        const g=gastosPorCode[r.code]||0,b=r.planned_budget||0,disp=b-g;
+                        return(
+                          <tr key={r.id} style={{borderBottom:`1px solid ${C.border}`,background:i%2===0?C.surface:"#FAFAF8"}}>
+                            <td style={{padding:"12px 16px",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:TYPE_COLOR[cat],fontWeight:500}}>{r.code}</td>
+                            <td style={{padding:"12px 16px",fontSize:11,color:C.text2}}>{r.descricao}</td>
+                            <td style={{padding:"12px 16px",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:C.text2}}>{formatEUR(b)}</td>
+                            <td style={{padding:"12px 16px",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:C.text2}}>{formatEUR(g)}</td>
+                            <td style={{padding:"12px 16px",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:disp>=0?C.green:C.red,fontWeight:500}}>{formatEUR(disp)}</td>
+                            <td style={{padding:"12px 16px"}}>
+                              <div style={{display:"flex",gap:6}}>
+                                <button onClick={()=>openEditRubrica(r)} style={btnSmall}>Editar</button>
+                                <button onClick={()=>delRubrica(r.id,r.code)} style={btnDanger}>✕</button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </>)}
+
+          {/* ── RELATÓRIOS ───────────────────────────────────────────────── */}
+          {!loading&&view==="relatorios"&&(<>
+            <div style={{marginBottom:36}}>
+              <div style={{fontSize:11,color:C.text3,letterSpacing:2,textTransform:"uppercase",marginBottom:8,fontWeight:500}}>Análise</div>
+              <div style={{fontSize:26,fontWeight:300,letterSpacing:-0.5}}>Relatórios</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
+              {[{label:"OPEX por Rubrica",rubs:opexRubricas,col:C.opex},{label:"CAPEX por Rubrica",rubs:capexRubricas,col:C.capex}].map(g=>(
+                <div key={g.label} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:24}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                    <div style={{fontSize:10,color:C.text3,fontWeight:500,letterSpacing:1,textTransform:"uppercase"}}>{g.label}</div>
+                    <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:g.col,fontWeight:500}}>{formatEUR(g.rubs.reduce((s,r)=>s+(gastosPorCode[r.code]||0),0))}</span>
+                  </div>
+                  {g.rubs.map(r=>{
+                    const v=gastosPorCode[r.code]||0,maxV=Math.max(...g.rubs.map(x=>gastosPorCode[x.code]||0),1);
+                    return(
+                      <div key={r.code} style={{marginBottom:12}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                          <span style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:C.text3}}>{r.code}</span>
+                          <span style={{fontSize:10,fontFamily:"'JetBrains Mono',monospace",color:g.col,fontWeight:500}}>{formatEUR(v)}</span>
+                        </div>
+                        <div style={{background:C.bg,borderRadius:2,height:3}}>
+                          <div style={{height:"100%",width:`${(v/maxV)*100}%`,background:g.col,borderRadius:2,opacity:0.7}}/>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:24,marginBottom:16}}>
+              <div style={{fontSize:10,color:C.text3,fontWeight:500,letterSpacing:1,textTransform:"uppercase",marginBottom:20}}>Gastos por Edifício</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10}}>
+                {EDIFICIOS.filter(e=>gastosPorEdif[e]>0).map(e=>{
+                  const v=gastosPorEdif[e],maxV=Math.max(...Object.values(gastosPorEdif),1);
+                  return(
+                    <div key={e} style={{marginBottom:8}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                        <span style={{fontSize:11,color:C.text2}}>{e}</span>
+                        <span style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:C.green,fontWeight:500}}>{formatEUR(v)}</span>
+                      </div>
+                      <div style={{background:C.bg,borderRadius:2,height:3}}>
+                        <div style={{height:"100%",width:`${(v/maxV)*100}%`,background:C.green,borderRadius:2,opacity:0.7}}/>
+                      </div>
+                    </div>
+                  );
+                })}
+                {EDIFICIOS.every(e=>!gastosPorEdif[e])&&<div style={{color:C.text3,fontSize:12,padding:8}}>Sem gastos por edifício ainda.</div>}
+              </div>
+            </div>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:24}}>
+              <div style={{fontSize:10,color:C.text3,fontWeight:500,letterSpacing:1,textTransform:"uppercase",marginBottom:20}}>Por membro da equipa</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
+                {EQUIPA.map(pessoa=>{
+                  const meus=pedidos.filter(p=>p.assignees?.includes(pessoa.nome)||p.preparer===pessoa.nome);
+                  const total=meus.reduce((s,p)=>s+Number(p.value||0),0);
+                  const abertos=meus.filter(p=>p.status==="Open"||p.status==="In Approval").length;
+                  return(
+                    <div key={pessoa.email} style={{background:C.bg,borderRadius:6,padding:20,border:`1px solid ${C.border}`}}>
+                      <div style={{width:36,height:36,borderRadius:"50%",background:C.sidebar,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:500,color:"#fff",marginBottom:12,letterSpacing:0.5}}>
+                        {pessoa.nome.split(" ").map(n=>n[0]).join("").slice(0,2)}
+                      </div>
+                      <div style={{fontSize:13,fontWeight:400,marginBottom:2}}>{pessoa.nome}</div>
+                      <div style={{fontSize:10,color:C.text3,marginBottom:2}}>{pessoa.email}</div>
+                      <div style={{fontSize:10,color:C.text3,marginBottom:12}}>{meus.length} pedidos · {abertos} abertos</div>
+                      <div style={{fontSize:16,color:C.text2,fontFamily:"'JetBrains Mono',monospace",fontWeight:300}}>{formatEUR(total)}</div>
+                      <div style={{width:20,height:2,background:C.pink,marginTop:10,borderRadius:1}}/>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>)}
+        </main>
+      </div>
+
+      {/* ── MODAL PEDIDO ─────────────────────────────────────────────────── */}
+      {showModal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(75,76,106,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999,backdropFilter:"blur(3px)"}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:40,width:700,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 32px 80px rgba(0,0,0,0.2)"}}>
+            <div style={{fontSize:11,color:C.text3,letterSpacing:2,textTransform:"uppercase",marginBottom:6,fontWeight:500}}>{editItem?"Edição":"Novo Registo"}</div>
+            <div style={{fontSize:20,fontWeight:300,marginBottom:24,color:C.text,letterSpacing:-0.3}}>{editItem?"Editar Pedido":"Pedido de Aquisição"}</div>
+
+            {/* Budget status bar */}
+            <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:16,marginBottom:24}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:TYPE_COLOR[CODE_TYPE[form.budget_code]]||C.opex,fontWeight:500}}>{form.budget_code}</span>
+                {CODE_TYPE[form.budget_code]&&<span style={{fontSize:9,padding:"2px 7px",borderRadius:3,background:TYPE_BG[CODE_TYPE[form.budget_code]],color:TYPE_COLOR[CODE_TYPE[form.budget_code]],fontWeight:600,letterSpacing:0.5}}>{CODE_TYPE[form.budget_code]}</span>}
+              </div>
+              <div style={{fontSize:10,color:C.text3,marginBottom:12,lineHeight:1.4}}>{CODE_DESC[form.budget_code]||"—"}</div>
+              <div style={{display:"flex",gap:28}}>
+                {[{l:"Planned",v:formatEUR(budgets[form.budget_code]||0),c:TYPE_COLOR[CODE_TYPE[form.budget_code]]||C.opex},{l:"Gasto",v:formatEUR(gastosPorCode[form.budget_code]||0),c:C.text2},{l:"Disponível",v:formatEUR((budgets[form.budget_code]||0)-(gastosPorCode[form.budget_code]||0)),c:C.green}].map(s=>(
+                  <div key={s.l}><div style={{fontSize:9,color:C.text3,letterSpacing:0.8,textTransform:"uppercase",marginBottom:3}}>{s.l}</div><div style={{fontSize:14,color:s.c,fontFamily:"'JetBrains Mono',monospace",fontWeight:400}}>{s.v}</div></div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+              <div>
+                <Lbl>Purchase Requisition</Lbl>
+                <input value={form.purchase_requisition||""} onChange={e=>setF("purchase_requisition",e.target.value)} placeholder="Ex: 218733" style={{...inp,fontFamily:"'JetBrains Mono',monospace"}}/>
+              </div>
+              <div>
+                <Lbl>Status</Lbl>
+                <select value={form.status} onChange={e=>setF("status",e.target.value)} style={selS}>{STATUS_OPTS.map(o=><option key={o}>{o}</option>)}</select>
+              </div>
+              <div style={{gridColumn:"1/-1"}}>
+                <Lbl>Name</Lbl>
+                <input value={form.name} onChange={e=>setF("name",e.target.value)} placeholder="Descrição do pedido" style={inp}/>
+              </div>
+              {[
+                {label:"Preparer",      key:"preparer",      type:"select", opts:NOMES},
+                {label:"Tipo Pedido",   key:"tipo",          type:"select", opts:TIPOS_PEDIDO},
+                {label:"Edifício",      key:"edificio",      type:"select", opts:EDIFICIOS},
+                {label:"Fornecedor",    key:"fornecedor",    type:"text"},
+                {label:"Budget Code",   key:"budget_code",   type:"select", opts:BUDGET_CODES},
+                {label:"PO",            key:"po",            type:"text"},
+                {label:"Data Criação",  key:"created_date",  type:"text"},
+                {label:"Ref. Orçamento",key:"ref_orcamento", type:"text"},
+                {label:"Valor (€)",     key:"value",         type:"number"},
+                {label:"Assignee(s)",   key:"assignees",     type:"text"},
+              ].map(f=>(
+                <div key={f.key}>
+                  <Lbl>{f.label}</Lbl>
+                  {f.type==="select"
+                    ?<select value={form[f.key]||""} onChange={e=>setF(f.key,e.target.value)} style={selS}>{f.opts.map(o=><option key={o}>{o}</option>)}</select>
+                    :<input type={f.type} value={form[f.key]||""} onChange={e=>setF(f.key,e.target.value)} style={f.key==="po"?{...inp,fontFamily:"'JetBrains Mono',monospace"}:inp}/>
+                  }
+                  {f.key==="budget_code"&&<div style={{fontSize:9,color:C.text3,marginTop:3,letterSpacing:0.3}}>{CODE_DESC[form.budget_code]||""}</div>}
+                </div>
+              ))}
+              <div style={{gridColumn:"1/-1"}}>
+                <Lbl>Notas</Lbl>
+                <input value={form.notas||""} onChange={e=>setF("notas",e.target.value)} style={inp}/>
+              </div>
+              <div style={{gridColumn:"1/-1"}}>
+                <Lbl>ID D365 <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,fontSize:9,color:C.text3,marginLeft:4}}>— integração futura</span></Lbl>
+                <input value={form.d365_id||""} onChange={e=>setF("d365_id",e.target.value)} placeholder="Ex: D365-PO-00001" style={{...inp,fontFamily:"'JetBrains Mono',monospace"}}/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:12,marginTop:28}}>
+              <button onClick={()=>setShowModal(false)} style={{...btnSecondary,flex:1,padding:"12px",textAlign:"center"}}>Cancelar</button>
+              <button onClick={savePedido} disabled={saving} style={{...btnPrimary,flex:2,padding:"12px",textAlign:"center",opacity:saving?0.6:1}}>
+                {saving?"A guardar...":editItem?"Atualizar Pedido":"Criar Pedido"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL RUBRICA ────────────────────────────────────────────────── */}
+      {showRubricaModal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(75,76,106,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999,backdropFilter:"blur(3px)"}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:40,width:520,boxShadow:"0 32px 80px rgba(0,0,0,0.2)"}}>
+            <div style={{fontSize:11,color:C.text3,letterSpacing:2,textTransform:"uppercase",marginBottom:6,fontWeight:500}}>{editRubrica?"Edição":"Nova"}</div>
+            <div style={{fontSize:20,fontWeight:300,marginBottom:28,color:C.text,letterSpacing:-0.3}}>{editRubrica?"Editar Rubrica":"Nova Rubrica"}</div>
+            <div style={{display:"grid",gap:16}}>
+              <div><Lbl>Código</Lbl><input value={rubricaForm.code} onChange={e=>setRF("code",e.target.value)} placeholder="Ex: O_NOVA.99" style={{...inp,fontFamily:"'JetBrains Mono',monospace"}} disabled={!!editRubrica}/></div>
+              <div><Lbl>Descrição</Lbl><input value={rubricaForm.descricao} onChange={e=>setRF("descricao",e.target.value)} placeholder="Descrição da rubrica" style={inp}/></div>
+              <div><Lbl>Categoria</Lbl><select value={rubricaForm.categoria} onChange={e=>setRF("categoria",e.target.value)} style={selS}><option>OPEX</option><option>CAPEX</option></select></div>
+              <div><Lbl>Budget Planned (€)</Lbl><input type="number" value={rubricaForm.planned_budget} onChange={e=>setRF("planned_budget",e.target.value)} style={{...inp,fontFamily:"'JetBrains Mono',monospace"}}/></div>
+            </div>
+            <div style={{display:"flex",gap:12,marginTop:28}}>
+              <button onClick={()=>setShowRubricaModal(false)} style={{...btnSecondary,flex:1,padding:"12px"}}>Cancelar</button>
+              <button onClick={saveRubrica} disabled={saving} style={{...btnPrimary,flex:2,padding:"12px",opacity:saving?0.6:1}}>{saving?"A guardar...":editRubrica?"Atualizar":"Criar Rubrica"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
