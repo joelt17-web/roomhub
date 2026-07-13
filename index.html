@@ -458,6 +458,13 @@
     color: var(--muted);
   }
 
+  .bld-occ-grid { display: grid; grid-template-columns: 130px repeat(3, 1fr); gap: 10px 16px; align-items: center; }
+  .bld-occ-hdr { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); text-align: center; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .bld-occ-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .bld-occ-name span { display: block; font-size: 11px; font-weight: 300; color: var(--muted2); }
+  .bld-occ-cell { display: flex; align-items: center; gap: 8px; }
+  .bld-occ-cell .occupancy-bar-wrap { flex: 1; }
+
   /* ── RECENT BOOKINGS ─────────────────────── */
   .recent-item {
     display: flex;
@@ -735,6 +742,24 @@
   .occ-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
   .occ-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
   .occ-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── REGRAS ─────────────────────────────── */
+  .rules-list { display: flex; flex-direction: column; gap: 10px; }
+  .rule-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .rule-card:hover { border-color: var(--tp-slate-lt); }
+  .rule-project { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .rule-sites { font-size: 13px; color: var(--tp-slate); font-weight: 500; margin-bottom: 4px; }
+  .rule-notes { font-size: 12px; color: var(--muted); }
+  .rule-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
   .cal-event { font-size: 9px; background: var(--tp-slate); color: #fff; border-radius: 2px; padding: 2px 5px; margin-bottom: 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600; letter-spacing: 0.2px; }
 
   /* ── LOADING ─────────────────────────────── */
@@ -931,6 +956,13 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
       Calendário
     </button>
+
+    <div class="nav-section-label">Referência</div>
+
+    <button class="nav-item" onclick="showPage('regras')" id="nav-regras">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="6" height="6" rx="1"/><path d="M13 7h8"/><rect x="3" y="14" width="6" height="6" rx="1"/><path d="M13 17h8"/></svg>
+      Regras
+    </button>
   </nav>
 
   <div class="sync-area">
@@ -980,8 +1012,8 @@
 
     <div class="two-col">
       <div class="card">
-        <div class="card-title">Ocupação por Sala — Próx. 30 dias</div>
-        <div class="occupancy-list" id="occupancy-list">
+        <div class="card-title">Ocupação por Edifício</div>
+        <div id="occupancy-list">
           <div class="empty-state"><div class="empty-icon">▣</div><p>Sem salas criadas ainda</p></div>
         </div>
       </div>
@@ -1103,6 +1135,23 @@
     </div>
   </section>
 
+  <!-- ── REGRAS ── -->
+  <section id="page-regras" class="page">
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow">Referência</div>
+        <h1 class="page-title">Regras de Projetos / Formações</h1>
+      </div>
+      <button class="btn btn-primary" onclick="openRuleModal()">+ Nova Regra</button>
+    </div>
+    <div class="filters-row">
+      <input type="text" id="rule-search" placeholder="Pesquisar projeto/formação ou sala..." oninput="renderRules()">
+    </div>
+    <div class="rules-list" id="rules-list">
+      <div class="empty-state"><div class="empty-icon">▣</div><p>A carregar regras...</p></div>
+    </div>
+  </section>
+
 </main>
 
 <!-- MODAL: SALA -->
@@ -1157,6 +1206,23 @@
   </div>
 </div>
 
+<!-- MODAL: REGRA -->
+<div class="modal-overlay" id="rule-modal">
+  <div class="modal">
+    <h2 class="modal-title" id="rule-modal-title">Nova Regra</h2>
+    <input type="hidden" id="rule-edit-id">
+    <div class="form-grid">
+      <div class="form-group full"><label>Projeto / Formação *</label><input type="text" id="rule-project" placeholder="ex: Projeto Alfa · Formação Onboarding"></div>
+      <div class="form-group full"><label>Sites / Salas permitidas *</label><textarea id="rule-sites" placeholder="ex: Green Campus, Tejo - salas E2.C.7 a E2.C.10"></textarea></div>
+      <div class="form-group full"><label>Notas</label><textarea id="rule-notes" placeholder="Informações adicionais (opcional)..."></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal('rule-modal')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-rule" onclick="saveRule()">Guardar Regra</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1172,7 +1238,7 @@ const HDR = {
 };
 
 // ── STATE ─────────────────────────────────────────────
-let rooms = [], bookings = [];
+let rooms = [], bookings = [], rules = [];
 const today = new Date(); today.setHours(0,0,0,0);
 let calYear = today.getFullYear(), calMonth = today.getMonth();
 
@@ -1231,12 +1297,15 @@ async function loadAll() {
     db.get('rh_rooms'),
     db.get('rh_bookings', 'select=*')
   ]);
+  try { rules = await db.get('rh_project_rules'); }
+  catch (e) { rules = []; console.warn('Tabela rh_project_rules ainda não existe.', e); }
 }
 
 function renderAll() {
   renderRooms();
   renderBookings();
   renderDashboard();
+  renderRules();
   updateBookingRoomFilter();
   updateCalBuildingFilter();
   updateCalRoomFilter();
@@ -1366,6 +1435,74 @@ function renderRooms() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── REGRAS ────────────────────────────────────────────
+function openRuleModal(id = null) {
+  document.getElementById('rule-modal-title').textContent = id ? 'Editar Regra' : 'Nova Regra';
+  document.getElementById('rule-edit-id').value = id || '';
+  if (id) {
+    const r = rules.find(x => x.id === id);
+    document.getElementById('rule-project').value = r.project;
+    document.getElementById('rule-sites').value = r.allowed_sites;
+    document.getElementById('rule-notes').value = r.notes || '';
+  } else {
+    document.getElementById('rule-project').value = '';
+    document.getElementById('rule-sites').value = '';
+    document.getElementById('rule-notes').value = '';
+  }
+  document.getElementById('rule-modal').classList.add('open');
+}
+
+async function saveRule() {
+  const project      = document.getElementById('rule-project').value.trim();
+  const allowed_sites = document.getElementById('rule-sites').value.trim();
+  const notes        = document.getElementById('rule-notes').value.trim();
+  const editId       = document.getElementById('rule-edit-id').value;
+
+  if (!project || !allowed_sites) { toast('Preenche o projeto/formação e os sites/salas permitidas.', true); return; }
+
+  const btn = document.getElementById('btn-save-rule');
+  btn.disabled = true; setSyncStatus('syncing', 'A guardar...');
+  try {
+    const data = { project, allowed_sites, notes };
+    if (editId) { await db.update('rh_project_rules', editId, data); toast('Regra atualizada.'); }
+    else { await db.insert('rh_project_rules', data); toast('Regra criada com sucesso.'); }
+    await loadAll(); closeModal('rule-modal'); renderAll(); setSyncStatus('synced', 'Sincronizado');
+  } catch (e) {
+    toast('Erro ao guardar regra. Confirma que a tabela rh_project_rules existe no Supabase.', true);
+    setSyncStatus('error', 'Erro'); console.error(e);
+  } finally { btn.disabled = false; }
+}
+
+async function deleteRule(id) {
+  if (!confirm('Apagar esta regra?')) return;
+  setSyncStatus('syncing', 'A apagar...');
+  try { await db.del('rh_project_rules', id); await loadAll(); renderAll(); toast('Regra removida.'); setSyncStatus('synced', 'Sincronizado'); }
+  catch (e) { toast('Erro ao apagar regra.', true); setSyncStatus('error', 'Erro'); }
+}
+
+function renderRules() {
+  const q = (document.getElementById('rule-search').value || '').toLowerCase();
+  const list = document.getElementById('rules-list');
+  const filtered = rules.filter(r =>
+    !q || r.project.toLowerCase().includes(q) || r.allowed_sites.toLowerCase().includes(q)
+  );
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">▣</div><p>${rules.length ? 'Nenhuma regra encontrada.' : 'Ainda não há regras. Clica em "+ Nova Regra".'}</p></div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(r => `<div class="rule-card">
+      <div>
+        <div class="rule-project">${r.project}</div>
+        <div class="rule-sites">📍 ${r.allowed_sites}</div>
+        ${r.notes ? `<div class="rule-notes">${r.notes}</div>` : ''}
+      </div>
+      <div class="rule-card-actions">
+        <button class="btn btn-outline btn-sm" onclick="openRuleModal('${r.id}')">Editar</button>
+        <button class="btn btn-danger-soft btn-sm" onclick="deleteRule('${r.id}')">✕</button>
+      </div>
+    </div>`).join('');
 }
 
 // ── CONFLICT ──────────────────────────────────────────
@@ -1515,6 +1652,51 @@ function updateBookingRoomFilter() {
 }
 
 // ── DASHBOARD ─────────────────────────────────────────
+// Counts business days (Mon-Fri) between two YYYY-MM-DD strings, inclusive.
+function businessDaysInRange(startStr, endStr) {
+  let s = new Date(startStr + 'T00:00:00');
+  const e = new Date(endStr + 'T00:00:00');
+  if (e < s) return 0;
+  let count = 0;
+  while (s <= e) {
+    const dow = s.getDay();
+    if (dow !== 0 && dow !== 6) count++;
+    s.setDate(s.getDate() + 1);
+  }
+  return count;
+}
+
+function monthBounds(year, month) {
+  const first = `${year}-${String(month+1).padStart(2,'0')}-01`;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const last = `${year}-${String(month+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+  return [first, last];
+}
+
+// Occupancy % per building for a given month, based on business-day room-capacity vs. booked business-days.
+function buildingOccupancyForMonth(year, month) {
+  const [mStart, mEnd] = monthBounds(year, month);
+  const bdInMonth = businessDaysInRange(mStart, mEnd);
+  const buildingNames = [...new Set(rooms.map(r => r.building || '—'))].sort();
+  const result = {};
+  buildingNames.forEach(bld => {
+    const bldRooms = rooms.filter(r => (r.building || '—') === bld);
+    const availableDays = bldRooms.length * bdInMonth;
+    let occupiedDays = 0;
+    bldRooms.forEach(r => {
+      bookings
+        .filter(b => b.room_id === r.id && b.start_date <= mEnd && b.end_date >= mStart)
+        .forEach(b => {
+          const s = b.start_date > mStart ? b.start_date : mStart;
+          const e = b.end_date < mEnd ? b.end_date : mEnd;
+          occupiedDays += businessDaysInRange(s, e);
+        });
+    });
+    result[bld] = availableDays > 0 ? Math.min(100, Math.round((occupiedDays / availableDays) * 100)) : 0;
+  });
+  return result;
+}
+
 function renderDashboard() {
   document.getElementById('stat-total-rooms').textContent = rooms.length;
   const todayStr = toDateStr(today);
@@ -1528,22 +1710,30 @@ function renderDashboard() {
   if (!rooms.length) {
     ol.innerHTML = `<div class="empty-state"><div class="empty-icon">▣</div><p>Sem salas criadas ainda</p></div>`;
   } else {
-    ol.innerHTML = rooms.map(r => {
-      const rB = bookings.filter(b=>b.room_id===r.id && b.end_date>=todayStr && b.start_date<=in30Str);
-      let days = 0;
-      rB.forEach(b => {
-        const s = new Date(Math.max(new Date(b.start_date),today));
-        const e = new Date(Math.min(new Date(b.end_date),in30));
-        days += Math.max(0, Math.round((e-s)/86400000)+1);
+    const monthsPT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const periods = [-1, 0, 1].map(offset => {
+      let y = today.getFullYear(), m = today.getMonth() + offset;
+      if (m < 0) { m = 11; y--; }
+      if (m > 11) { m = 0; y++; }
+      return { year: y, month: m, label: monthsPT[m], occ: buildingOccupancyForMonth(y, m) };
+    });
+    const buildingNames = [...new Set(rooms.map(r => r.building || '—'))].sort();
+    const roomCount = {};
+    buildingNames.forEach(b => { roomCount[b] = rooms.filter(r => (r.building||'—')===b).length; });
+
+    let html = `<div class="bld-occ-grid">`;
+    html += `<div></div>`;
+    periods.forEach(p => { html += `<div class="bld-occ-hdr">${p.label}</div>`; });
+    buildingNames.forEach(bld => {
+      html += `<div class="bld-occ-name">${bld}<span>${roomCount[bld]} sala${roomCount[bld]!==1?'s':''}</span></div>`;
+      periods.forEach(p => {
+        const pct = p.occ[bld] || 0;
+        const cls = pct>=80?'bar-high':pct>=40?'bar-medium':'bar-low';
+        html += `<div class="bld-occ-cell"><div class="occupancy-bar-wrap"><div class="occupancy-bar ${cls}" style="width:${pct}%"></div></div><div class="occupancy-pct">${pct}%</div></div>`;
       });
-      const pct = Math.min(100, Math.round((days/30)*100));
-      const cls = pct>=80?'bar-high':pct>=40?'bar-medium':'bar-low';
-      return `<div class="occupancy-item">
-        <div class="occupancy-name">${r.name}<div class="occupancy-loc">${r.location}</div></div>
-        <div class="occupancy-bar-wrap"><div class="occupancy-bar ${cls}" style="width:${pct}%"></div></div>
-        <div class="occupancy-pct">${pct}%</div>
-      </div>`;
-    }).join('');
+    });
+    html += `</div>`;
+    ol.innerHTML = html;
   }
 
   const rb = document.getElementById('recent-bookings');
