@@ -1100,6 +1100,11 @@ let rooms = [], bookings = [];
 const today = new Date(); today.setHours(0,0,0,0);
 let calYear = today.getFullYear(), calMonth = today.getMonth();
 
+// Use local date string (YYYY-MM-DD) to avoid UTC timezone shift
+function toDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 // ── DB ────────────────────────────────────────────────
 const db = {
   get: async (t, q='') => {
@@ -1253,7 +1258,7 @@ function renderRooms() {
   const q = (document.getElementById('room-search').value||'').toLowerCase();
   const tf = document.getElementById('room-type-filter').value;
   const grid = document.getElementById('rooms-grid');
-  const todayStr = today.toISOString().slice(0,10);
+  const todayStr = toDateStr(today);
   const filtered = rooms.filter(r =>
     (!q || r.name.toLowerCase().includes(q) || r.location.toLowerCase().includes(q)) &&
     (!tf || r.type===tf)
@@ -1312,7 +1317,7 @@ function openBookingModal(id=null, preRoomId=null) {
   document.getElementById('conflict-box').classList.remove('show');
   const sel = document.getElementById('booking-room');
   sel.innerHTML = rooms.map(r => `<option value="${r.id}">${r.name} — ${r.location}</option>`).join('');
-  const todayStr = today.toISOString().slice(0,10);
+  const todayStr = toDateStr(today);
   if (id) {
     const b = bookings.find(x => x.id===id);
     document.getElementById('booking-project').value = b.project;
@@ -1436,9 +1441,9 @@ function updateBookingRoomFilter() {
 // ── DASHBOARD ─────────────────────────────────────────
 function renderDashboard() {
   document.getElementById('stat-total-rooms').textContent = rooms.length;
-  const todayStr = today.toISOString().slice(0,10);
+  const todayStr = toDateStr(today);
   const in30 = new Date(); in30.setDate(in30.getDate()+30);
-  const in30Str = in30.toISOString().slice(0,10);
+  const in30Str = toDateStr(in30);
   document.getElementById('stat-active-bookings').textContent = bookings.filter(b=>bStatus(b)==='active').length;
   document.getElementById('stat-upcoming-bookings').textContent = bookings.filter(b=>bStatus(b)==='upcoming'&&b.start_date<=in30Str).length;
   document.getElementById('stat-total-seats').textContent = rooms.reduce((s,r)=>s+r.seats,0);
@@ -1563,7 +1568,7 @@ function renderCalendar() {
   );
   const filteredRoomIds = new Set(filteredRooms.map(r => r.id));
 
-  const todayStr = today.toISOString().slice(0,10);
+  const todayStr = toDateStr(today);
   const grid = document.getElementById('calendar-grid');
   const headers = Array.from(grid.querySelectorAll('.cal-hdr'));
   grid.innerHTML = '';
@@ -1625,7 +1630,7 @@ function renderWeek() {
   const label = `${days[0].toLocaleDateString('pt-PT', {day:'numeric',month:'long'})} – ${days[4].toLocaleDateString('pt-PT', opts)}`;
   document.getElementById('cal-week-label').textContent = label;
 
-  const todayStr = today.toISOString().slice(0,10);
+  const todayStr = toDateStr(today);
 
   // Filter rooms
   const filteredRooms = rooms.filter(r =>
@@ -1637,7 +1642,7 @@ function renderWeek() {
   const allBuildings = [...new Set(filteredRooms.map(r => r.building || '—'))].sort();
 
   // Date strings for each day
-  const dateStrs = days.map(d => d.toISOString().slice(0,10));
+  const dateStrs = days.map(d => d);
 
   // Build table
   let html = '<div class="week-grid-wrap"><table class="week-table"><thead><tr>';
