@@ -655,6 +655,76 @@
   .cal-day.empty { background: transparent; cursor: default; border-color: transparent; }
   .cal-day-num { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
   .cal-day.today .cal-day-num { color: var(--tp-slate); font-weight: 700; }
+
+  /* ── OCCUPANCY GRID (calendar month/week) ─── */
+  .occ-wrap { overflow-x: auto; }
+  .occ-grid { display: grid; min-width: max-content; }
+  .occ-corner {
+    position: sticky; left: 0; z-index: 2;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border2);
+    border-right: 1px solid var(--border2);
+  }
+  .occ-hdr {
+    text-align: center;
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--muted);
+    padding: 6px 2px;
+    border-bottom: 1px solid var(--border2);
+  }
+  .occ-hdr.is-today { color: #fff; background: var(--tp-slate); border-radius: 4px 4px 0 0; }
+  .occ-hdr-num { display: block; font-size: 13px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .occ-hdr.is-today .occ-hdr-num { color: #fff; }
+  .occ-room {
+    position: sticky; left: 0; z-index: 1;
+    background: var(--surface);
+    border-right: 1px solid var(--border2);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 10px;
+    font-size: 12px; font-weight: 600; color: var(--text);
+    display: flex; align-items: center; gap: 7px;
+    white-space: nowrap;
+  }
+  .occ-room-bld { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .occ-room.group-start { border-top: 2px solid var(--border2); }
+  .occ-cell {
+    position: relative;
+    min-height: 36px;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--surface2);
+    cursor: pointer;
+  }
+  .occ-cell.group-start { border-top: 2px solid var(--border2); }
+  .occ-cell:hover { background: var(--surface2); }
+  .occ-cell.is-today-col { background: rgba(75,76,106,0.05); }
+  .occ-bar {
+    position: absolute; top: 4px; bottom: 4px; left: 0; right: 0;
+    color: #fff; font-size: 10px; font-weight: 600;
+    display: flex; align-items: center;
+    padding: 0 6px;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  }
+  .occ-bar.bar-solo { left: 3px; right: 3px; border-radius: 4px; }
+  .occ-bar.bar-start { left: 3px; right: -1px; border-radius: 4px 0 0 4px; }
+  .occ-bar.bar-end { left: -1px; right: 3px; border-radius: 0 4px 4px 0; }
+  .occ-bar.bar-mid { left: -1px; right: -1px; border-radius: 0; }
+  .occ-bar-seg {
+    position: absolute; left: 0; right: -1px;
+    color: #fff; font-size: 9px; font-weight: 600;
+    display: flex; align-items: center; padding: 0 5px;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    border-radius: 3px;
+  }
+  .occ-empty-add {
+    opacity: 0; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--muted2);
+    transition: opacity 0.15s;
+  }
+  .occ-cell:hover .occ-empty-add { opacity: 1; }
+  .occ-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .occ-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .occ-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .cal-event { font-size: 9px; background: var(--tp-slate); color: #fff; border-radius: 2px; padding: 2px 5px; margin-bottom: 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600; letter-spacing: 0.2px; }
 
   /* ── LOADING ─────────────────────────────── */
@@ -1005,10 +1075,7 @@
         <button class="btn btn-ghost btn-sm" onclick="goToToday()" style="margin-left:8px;">Hoje</button>
         <button class="btn btn-ghost btn-sm" onclick="refreshCalendar()" title="Recarregar dados" style="padding:6px 10px;">↺</button>
       </div>
-      <div class="cal-grid" id="calendar-grid">
-        <div class="cal-hdr">Seg</div><div class="cal-hdr">Ter</div><div class="cal-hdr">Qua</div>
-        <div class="cal-hdr">Qui</div><div class="cal-hdr">Sex</div>
-      </div>
+      <div id="calendar-grid"></div>
     </div>
 
     <!-- WEEK VIEW -->
@@ -1554,90 +1621,156 @@ function updateCalRoomFilter() {
   if (val && filtered.find(r => r.id === val)) sel.value = val;
 }
 
+function buildingColorMap() {
+  const allBuildings = [...new Set(rooms.map(r => r.building || '—'))].sort();
+  const map = {};
+  allBuildings.forEach((b, i) => { map[b] = BUILDING_COLORS[i % BUILDING_COLORS.length]; });
+  return map;
+}
+
+// Renders a room × day occupancy grid into containerId for the given list of
+// date strings (YYYY-MM-DD). Used by both month and week views so occupancy
+// reads the same way regardless of range.
+function renderOccupancyGrid(containerId, dates) {
+  const container = document.getElementById(containerId);
+  const building = document.getElementById('cal-building-filter').value;
+  const roomId   = document.getElementById('cal-room-filter').value;
+
+  const filteredRooms = rooms
+    .filter(r => (!building || r.building === building) && (!roomId || r.id === roomId))
+    .slice()
+    .sort((a, b) => (a.building||'').localeCompare(b.building||'') || a.name.localeCompare(b.name));
+
+  if (!filteredRooms.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">▣</div><p>${rooms.length ? 'Sem salas para os filtros selecionados.' : 'Ainda não há salas. Cria uma em "Salas".'}</p></div>`;
+    return;
+  }
+
+  const bldColorMap = buildingColorMap();
+  const todayStr = toDateStr(today);
+  const weekdayLbl = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  let html = `<div class="occ-wrap"><div class="occ-grid" style="grid-template-columns:180px repeat(${dates.length}, minmax(34px,1fr));">`;
+
+  html += `<div class="occ-corner"></div>`;
+  dates.forEach(dateStr => {
+    const d = new Date(dateStr + 'T00:00:00');
+    const isToday = dateStr === todayStr;
+    html += `<div class="occ-hdr${isToday ? ' is-today' : ''}">${weekdayLbl[d.getDay()]}<span class="occ-hdr-num">${d.getDate()}</span></div>`;
+  });
+
+  let prevBuilding = null;
+  filteredRooms.forEach(r => {
+    const bld = r.building || '—';
+    const groupStart = bld !== prevBuilding;
+    prevBuilding = bld;
+
+    html += `<div class="occ-room${groupStart ? ' group-start' : ''}" title="${r.name} — ${bld}"><span class="occ-room-bld" style="background:${bldColorMap[bld]}"></span>${r.name}</div>`;
+
+    dates.forEach(dateStr => {
+      const isToday = dateStr === todayStr;
+      const dayBookings = bookings.filter(b => b.room_id === r.id && b.start_date <= dateStr && b.end_date >= dateStr);
+      let inner = '';
+      if (dayBookings.length === 1) {
+        const b = dayBookings[0];
+        const isStart = b.start_date === dateStr;
+        const isEnd = b.end_date === dateStr;
+        const barCls = (isStart && isEnd) ? 'bar-solo' : isStart ? 'bar-start' : isEnd ? 'bar-end' : 'bar-mid';
+        inner = `<div class="occ-bar ${barCls}" style="background:${bldColorMap[bld]}" title="${b.project} — ${formatDate(b.start_date)} a ${formatDate(b.end_date)}${b.owner ? ' · '+b.owner : ''}" onclick="event.stopPropagation();openBookingModal('${b.id}')">${isStart ? b.project : ''}</div>`;
+      } else if (dayBookings.length > 1) {
+        const h = 100 / dayBookings.length;
+        inner = dayBookings.map((b, i) => {
+          const isStart = b.start_date === dateStr;
+          return `<div class="occ-bar-seg" style="top:${i*h}%;height:${h}%;background:${bldColorMap[bld]}" title="${b.project}${b.owner ? ' · '+b.owner : ''}" onclick="event.stopPropagation();openBookingModal('${b.id}')">${isStart ? b.project : ''}</div>`;
+        }).join('');
+      } else {
+        inner = `<div class="occ-empty-add">+</div>`;
+      }
+      const clickable = dayBookings.length === 0 ? `onclick="openBookingModalWithDate('${dateStr}','${r.id}')"` : '';
+      html += `<div class="occ-cell${isToday ? ' is-today-col' : ''}${groupStart ? ' group-start' : ''}" ${clickable}>${inner}</div>`;
+    });
+  });
+
+  html += `</div></div>`;
+
+  const usedBuildings = [...new Set(filteredRooms.map(r => r.building || '—'))];
+  if (usedBuildings.length > 1) {
+    html += `<div class="occ-legend">` + usedBuildings.map(b =>
+      `<span class="occ-legend-item"><span class="occ-legend-dot" style="background:${bldColorMap[b]}"></span>${b}</span>`
+    ).join('') + `</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
 function renderCalendar() {
   const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   document.getElementById('cal-month-label').textContent = `${months[calMonth]} ${calYear}`;
 
-  const building = document.getElementById('cal-building-filter').value;
-  const roomId   = document.getElementById('cal-room-filter').value;
-
-  const filteredRooms = rooms.filter(r =>
-    (!building || r.building === building) &&
-    (!roomId   || r.id === roomId)
-  );
-  const filteredRoomIds = new Set(filteredRooms.map(r => r.id));
-
-  // Build building→color map
-  const allBuildings = [...new Set(rooms.map(r => r.building || '—'))].sort();
-  const bldColorMap = {};
-  allBuildings.forEach((b, i) => { bldColorMap[b] = BUILDING_COLORS[i % BUILDING_COLORS.length]; });
-
-  const todayStr = toDateStr(today);
-  const grid = document.getElementById('calendar-grid');
-  const headers = Array.from(grid.querySelectorAll('.cal-hdr'));
-  grid.innerHTML = '';
-  headers.forEach(h => grid.appendChild(h));
-
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const firstDay = new Date(calYear, calMonth, 1);
-  const firstDow = firstDay.getDay();
-  const monBased = (firstDow + 6) % 7;
-  const offset = monBased <= 4 ? monBased : 0;
-
-  for (let i = 0; i < offset; i++) {
-    const d = document.createElement('div');
-    d.className = 'cal-day empty';
-    grid.appendChild(d);
-  }
-
+  const dates = [];
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dow = new Date(calYear, calMonth, d).getDay();
-    if (dow === 0 || dow === 6) continue;
+    if (dow === 0 || dow === 6) continue; // business days only
+    dates.push(`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+  }
+  renderOccupancyGrid('calendar-grid', dates);
+}
 
-    const isToday = dateStr === todayStr;
-    const dayB = bookings.filter(b =>
-      b.start_date <= dateStr && b.end_date >= dateStr &&
-      filteredRoomIds.has(b.room_id)
-    );
+function renderWeek() {
+  if (!calWeekStart) {
+    const d = new Date(today);
+    const day = d.getDay();
+    const diff = (day === 0) ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0,0,0,0);
+    calWeekStart = d;
+  }
+  const start = new Date(calWeekStart);
+  const end = new Date(start); end.setDate(end.getDate() + 4);
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  document.getElementById('cal-week-label').textContent =
+    `${start.getDate()} ${months[start.getMonth()]} – ${end.getDate()} ${months[end.getMonth()]} ${end.getFullYear()}`;
 
-    // Count free rooms this day
-    const occupiedRoomIds = new Set(dayB.map(b => b.room_id));
-    const freeCount = filteredRooms.filter(r => !occupiedRoomIds.has(r.id)).length;
+  const dates = [];
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    dates.push(toDateStr(d));
+  }
+  renderOccupancyGrid('week-grid', dates);
+}
 
-    const div = document.createElement('div');
-    div.className = 'cal-day' + (isToday ? ' today' : '');
-    div.onclick = () => openBookingModalWithDate(dateStr);
+function openBookingModalWithDate(dateStr, preRoomId = null) {
+  openBookingModal(null, preRoomId);
+  document.getElementById('booking-start').value = dateStr;
+  document.getElementById('booking-end').value = dateStr;
+  setTimeout(checkConflicts, 100);
+}
 
-    let inner = `<div class="cal-day-num">${d}<span class="cal-day-add">+</span></div>`;
-
-    // Show up to 3 bookings, each with room name + project
-    const shown = dayB.slice(0, 3);
-    shown.forEach(b => {
-      const room = rooms.find(r => r.id === b.room_id);
-      const bld = room ? (room.building || '—') : '—';
-      const color = bldColorMap[bld] || 'var(--tp-slate)';
-      inner += `<div class="cal-event-rich" style="background:${color};" 
-        title="${room ? room.name : ''} — ${b.project}"
-        onclick="event.stopPropagation();openBookingModal('${b.id}')">
-        <span class="cer-room">${room ? room.name : '?'}</span>
-        <span class="cer-proj">${b.project}</span>
-      </div>`;
-    });
-
-    if (dayB.length > 3) {
-      inner += `<div class="cal-more" onclick="event.stopPropagation();">+${dayB.length - 3} mais</div>`;
-    }
-
-    if (freeCount > 0 && filteredRooms.length > 0) {
-      inner += `<div class="cal-free-count">${freeCount} livre${freeCount !== 1 ? 's' : ''}</div>`;
-    }
-
-    div.innerHTML = inner;
-    grid.appendChild(div);
+function goToToday() {
+  if (calView === 'week') {
+    calWeekStart = null;
+    renderWeek();
+  } else {
+    calMonth = today.getMonth();
+    calYear  = today.getFullYear();
+    renderCalendar();
   }
 }
 
+async function refreshCalendar() {
+  setSyncStatus('syncing', 'A recarregar...');
+  try {
+    await loadAll();
+    renderAll();
+    setSyncStatus('synced', 'Sincronizado');
+    toast('Calendário atualizado.');
+  } catch (e) {
+    setSyncStatus('error', 'Erro');
+    toast('Erro ao recarregar dados.', true);
+    console.error(e);
+  }
+}
 
 function changeWeek(dir) {
   if (!calWeekStart) return;
