@@ -799,19 +799,14 @@
   .room-label { font-size: 13px; font-weight: 500; color: var(--text); }
   .room-label-loc { font-size: 10px; color: var(--muted2); }
 
-  .cal-day { position: relative; }
   .cal-day-add {
-    display: none;
-    position: absolute;
-    top: 4px; right: 6px;
     font-size: 14px;
     font-weight: 300;
-    color: var(--tp-slate);
-    line-height: 1;
+    color: var(--tp-slate-lt);
+    opacity: 0;
+    transition: opacity 0.15s;
   }
-  .cal-day:hover .cal-day-add { display: inline; }
-  .cal-day:hover { cursor: pointer; }
-  .cal-day-num { position: relative; }
+  .cal-day:hover .cal-day-add { opacity: 1; }
   .week-cell-free { color: var(--muted2); font-size: 11px; font-weight: 400; transition: color 0.15s; }
   td:hover .week-cell-free { color: var(--tp-slate); font-weight: 600; }
 </style>
@@ -1007,6 +1002,8 @@
         <button class="btn btn-ghost btn-sm" onclick="changeMonth(-1)">← Anterior</button>
         <span class="cal-month" id="cal-month-label"></span>
         <button class="btn btn-ghost btn-sm" onclick="changeMonth(1)">Próximo →</button>
+        <button class="btn btn-ghost btn-sm" onclick="goToToday()" style="margin-left:8px;">Hoje</button>
+        <button class="btn btn-ghost btn-sm" onclick="refreshCalendar()" title="Recarregar dados" style="padding:6px 10px;">↺</button>
       </div>
       <div class="cal-grid" id="calendar-grid">
         <div class="cal-hdr">Seg</div><div class="cal-hdr">Ter</div><div class="cal-hdr">Qua</div>
@@ -1021,6 +1018,8 @@
           <button class="btn btn-ghost btn-sm" onclick="changeWeek(-1)">← Semana anterior</button>
           <span class="cal-month" id="cal-week-label"></span>
           <button class="btn btn-ghost btn-sm" onclick="changeWeek(1)">Próxima semana →</button>
+          <button class="btn btn-ghost btn-sm" onclick="goToToday()" style="margin-left:8px;">Esta semana</button>
+          <button class="btn btn-ghost btn-sm" onclick="refreshCalendar()" title="Recarregar dados" style="padding:6px 10px;">↺</button>
         </div>
         <div id="week-grid"></div>
       </div>
@@ -1568,13 +1567,18 @@ function renderCalendar() {
   );
   const filteredRoomIds = new Set(filteredRooms.map(r => r.id));
 
+  // Build building→color map
+  const allBuildings = [...new Set(rooms.map(r => r.building || '—'))].sort();
+  const bldColorMap = {};
+  allBuildings.forEach((b, i) => { bldColorMap[b] = BUILDING_COLORS[i % BUILDING_COLORS.length]; });
+
   const todayStr = toDateStr(today);
   const grid = document.getElementById('calendar-grid');
   const headers = Array.from(grid.querySelectorAll('.cal-hdr'));
   grid.innerHTML = '';
   headers.forEach(h => grid.appendChild(h));
 
-  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const firstDay = new Date(calYear, calMonth, 1);
   const firstDow = firstDay.getDay();
   const monBased = (firstDow + 6) % 7;
@@ -1597,147 +1601,43 @@ function renderCalendar() {
       filteredRoomIds.has(b.room_id)
     );
 
+    // Count free rooms this day
+    const occupiedRoomIds = new Set(dayB.map(b => b.room_id));
+    const freeCount = filteredRooms.filter(r => !occupiedRoomIds.has(r.id)).length;
+
     const div = document.createElement('div');
     div.className = 'cal-day' + (isToday ? ' today' : '');
-    div.title = 'Clica para agendar em ' + formatDate(dateStr);
     div.onclick = () => openBookingModalWithDate(dateStr);
-    div.innerHTML = `<div class="cal-day-num">${d}<span class="cal-day-add">+</span></div>` +
-      dayB.slice(0, 4).map(b => {
-        const room = rooms.find(r => r.id === b.room_id);
-        return `<div class="cal-event" title="${b.project} — ${room ? room.name : ''}" onclick="event.stopPropagation();openBookingModal('${b.id}')">${b.project}${filteredRooms.length > 1 && room ? ' · ' + room.name : ''}</div>`;
-      }).join('') +
-      (dayB.length > 4 ? `<div style="font-size:9px;color:var(--muted2);padding:1px 4px;">+${dayB.length-4}</div>` : '');
+
+    let inner = `<div class="cal-day-num">${d}<span class="cal-day-add">+</span></div>`;
+
+    // Show up to 3 bookings, each with room name + project
+    const shown = dayB.slice(0, 3);
+    shown.forEach(b => {
+      const room = rooms.find(r => r.id === b.room_id);
+      const bld = room ? (room.building || '—') : '—';
+      const color = bldColorMap[bld] || 'var(--tp-slate)';
+      inner += `<div class="cal-event-rich" style="background:${color};" 
+        title="${room ? room.name : ''} — ${b.project}"
+        onclick="event.stopPropagation();openBookingModal('${b.id}')">
+        <span class="cer-room">${room ? room.name : '?'}</span>
+        <span class="cer-proj">${b.project}</span>
+      </div>`;
+    });
+
+    if (dayB.length > 3) {
+      inner += `<div class="cal-more" onclick="event.stopPropagation();">+${dayB.length - 3} mais</div>`;
+    }
+
+    if (freeCount > 0 && filteredRooms.length > 0) {
+      inner += `<div class="cal-free-count">${freeCount} livre${freeCount !== 1 ? 's' : ''}</div>`;
+    }
+
+    div.innerHTML = inner;
     grid.appendChild(div);
   }
 }
 
-function renderWeek() {
-  if (!calWeekStart) return;
-
-  const building = document.getElementById('cal-building-filter').value;
-  const roomId   = document.getElementById('cal-room-filter').value;
-
-  // Build 5 weekdays
-  const days = [];
-  for (let i = 0; i < 5; i++) {
-    const d = new Date(calWeekStart);
-    d.setDate(d.getDate() + i);
-    days.push(d);
-  }
-
-  // Week label
-  const opts = { day: 'numeric', month: 'long', year: 'numeric' };
-  const label = `${days[0].toLocaleDateString('pt-PT', {day:'numeric',month:'long'})} – ${days[4].toLocaleDateString('pt-PT', opts)}`;
-  document.getElementById('cal-week-label').textContent = label;
-
-  const todayStr = toDateStr(today);
-
-  // Filter rooms
-  const filteredRooms = rooms.filter(r =>
-    (!building || r.building === building) &&
-    (!roomId   || r.id === roomId)
-  );
-
-  // Get unique buildings in order
-  const allBuildings = [...new Set(filteredRooms.map(r => r.building || '—'))].sort();
-
-  // Date strings for each day
-  const dateStrs = days.map(d => d);
-
-  // Build table
-  let html = '<div class="week-grid-wrap"><table class="week-table"><thead><tr>';
-  html += '<th>Sala</th>';
-  days.forEach((d, i) => {
-    const ds = dateStrs[i];
-    const isToday = ds === todayStr;
-    const dayName = d.toLocaleDateString('pt-PT', {weekday:'short'}).replace('.','');
-    const dayNum  = d.toLocaleDateString('pt-PT', {day:'numeric', month:'short'});
-    html += `<th class="${isToday ? 'today-col' : ''}">${dayName.charAt(0).toUpperCase()+dayName.slice(1)}<br><span style="font-size:10px;font-weight:300;opacity:0.7;">${dayNum}</span></th>`;
-  });
-  html += '</tr></thead><tbody>';
-
-  // Rooms by building — occupied first, then free section
-  allBuildings.forEach(bld => {
-    const bldRooms = filteredRooms.filter(r => (r.building || '—') === bld);
-    if (!bldRooms.length) return;
-
-    const color = getBuildingColor(bld, allBuildings);
-
-    // Building header row
-    html += `<tr class="week-building-header"><td colspan="${days.length + 1}" style="background:${color} !important;">🏢 ${bld}</td></tr>`;
-
-    // Separate occupied and free rooms for this building (at least one booking in the week)
-    const occupiedRooms = [];
-    const freeRooms = [];
-
-    bldRooms.forEach(r => {
-      const hasBooking = dateStrs.some(ds =>
-        bookings.some(b => b.room_id === r.id && b.start_date <= ds && b.end_date >= ds)
-      );
-      if (hasBooking) occupiedRooms.push(r);
-      else freeRooms.push(r);
-    });
-
-    // Render occupied rooms
-    occupiedRooms.forEach(r => {
-      html += `<tr>`;
-      html += `<td><div class="room-label">${r.name}</div><div class="room-label-loc">${r.location || ''} · ${r.seats} postos</div></td>`;
-      dateStrs.forEach(ds => {
-        const dayBookings = bookings.filter(b =>
-          b.room_id === r.id && b.start_date <= ds && b.end_date >= ds
-        );
-        if (dayBookings.length) {
-          const b = dayBookings[0];
-          html += `<td style="cursor:pointer;" onclick="openBookingModal('${b.id}')"><div class="week-cell-booked" style="background:${color};">
-            <span class="proj" title="${b.project}">${b.project}</span>
-            <span style="font-size:9px;opacity:0.7;">${b.people} p.</span>
-          </div>${dayBookings.length > 1 ? `<div style="font-size:9px;color:var(--muted2);margin-top:2px;">+${dayBookings.length-1}</div>` : ''}</td>`;
-        } else {
-          html += `<td style="cursor:pointer;" onclick="openBookingModalWithDateAndRoom('${ds}','${r.id}')"><span class="week-cell-free">+ Agendar</span></td>`;
-        }
-      });
-      html += `</tr>`;
-    });
-
-    // Free rooms section
-    if (freeRooms.length) {
-      html += `<tr class="week-free-header"><td colspan="${days.length + 1}">Salas livres toda a semana — ${bld}</td></tr>`;
-      freeRooms.forEach(r => {
-        html += `<tr>`;
-        html += `<td><div class="room-label">${r.name}</div><div class="room-label-loc">${r.location || ''} · ${r.seats} postos</div></td>`;
-        dateStrs.forEach(ds => {
-          html += `<td style="cursor:pointer;" onclick="openBookingModalWithDateAndRoom('${ds}','${r.id}')"><span class="week-cell-free">+ Agendar</span></td>`;
-        });
-        html += `</tr>`;
-      });
-    }
-  });
-
-  html += '</tbody></table></div>';
-  document.getElementById('week-grid').innerHTML = html;
-}
-
-
-function openBookingModalWithDate(dateStr) {
-  if (!rooms.length) { toast('Cria pelo menos uma sala primeiro.', true); return; }
-  openBookingModal(null, null);
-  // Pre-fill the dates
-  setTimeout(() => {
-    document.getElementById('booking-start').value = dateStr;
-    document.getElementById('booking-end').value = dateStr;
-    checkConflicts();
-  }, 50);
-}
-
-function openBookingModalWithDateAndRoom(dateStr, roomId) {
-  if (!rooms.length) { toast('Cria pelo menos uma sala primeiro.', true); return; }
-  openBookingModal(null, roomId);
-  setTimeout(() => {
-    document.getElementById('booking-start').value = dateStr;
-    document.getElementById('booking-end').value = dateStr;
-    checkConflicts();
-  }, 50);
-}
 
 function changeWeek(dir) {
   if (!calWeekStart) return;
